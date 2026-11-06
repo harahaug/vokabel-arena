@@ -291,3 +291,20 @@ body{font-size:18px;line-height:1.45}
 .btn.wide{display:block;width:100%;margin-top:14px;padding:14px;text-align:center}
 .steps{text-align:left;color:var(--mut);padding-left:22px;margin:16px 0 8px;line-height:1.7;font-size:16px}.steps b{color:#fff}
 .stickybar{position:sticky;bottom:0;padding:10px 0 4px;background:linear-gradient(transparent,rgba(20,9,58,.95) 40%)}
+
+/* Karten-Drehung: hebt sich ab, kippt leicht, landet weich */
+.flip{transition:none}
+.flip.on{transform:rotateY(180deg);animation:flipOn .95s cubic-bezier(.33,.9,.35,1) both}
+@keyframes flipOn{
+  0%{transform:translateZ(0) scale(1) rotateZ(0) rotateY(0)}
+  40%{transform:translateZ(70px) scale(1.08) rotateZ(-3deg) rotateY(90deg)}
+  75%{transform:translateZ(30px) scale(1.04) rotateZ(1.5deg) rotateY(188deg)}
+  100%{transform:translateZ(0) scale(1) rotateZ(0) rotateY(180deg)}}
+.face.good{animation:glowGood 1s ease-out}.face.bad{animation:glowBad 1s ease-out}
+@keyframes glowGood{0%{box-shadow:0 0 0 0 #35e08a}40%{box-shadow:0 0 0 18px rgba(53,224,138,.35),0 0 60px 10px #35e08a}100%{box-shadow:0 0 0 2px #0004,0 22px 40px rgba(0,0,0,.5),0 0 40px -6px var(--c2)}}
+@keyframes glowBad{0%{box-shadow:0 0 0 0 #ff5470}40%{box-shadow:0 0 0 14px rgba(255,84,112,.3)}100%{box-shadow:0 0 0 2px #0004,0 22px 40px rgba(0,0,0,.5),0 0 40px -6px var(--c2)}}
+body.calm .flip{transition:transform .45s ease}
+body.calm .flip.on{animation:none;transform:rotateY(180deg)}
+body.calm .face.good,body.calm .face.bad{animation:none}
+/* schlanker Kopf im Ruhig-Modus */
+body.calm #chip-xp,body.calm #chip-streak{display:none}

@@ -156,7 +156,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-go]'
 function refresh() {
   const me = profiles.find(p => p.id === curId); $('#who').textContent = '👤 ' + (me ? me.name : '–');
   $('#xp').textContent = db.xp; $('#streak').textContent = db.streak;
-  $('#calm-btn').textContent = db.set.calm ? '🧘 Ruhig-Modus: AN' : '🎉 Action-Modus: AN';
+  $('#calm-btn').hidden = true; $('#calm-btn').textContent = db.set.calm ? '🧘 Ruhig-Modus: AN' : '🎉 Action-Modus: AN';
   $('#home-empty').hidden = db.cards.length > 0;
   $('#home-count').textContent = db.cards.length ? `${db.cards.length} Karten bereit` : 'Erst Karten sammeln!';
 }
@@ -652,7 +652,7 @@ function pickCards(pool) {
   return out;
 }
 function pickDir(c) {
-  const d = db.set.dir, f = !!c.forms;
+  const d = db.set.dir, f = !!c.forms && db.set.level !== 'leicht';   // Leicht: nie selbst schreiben
   if (d === 'en-de') return 'en-de';
   if (d === 'de-en') return f ? 'forms' : 'de-en';
   return Math.random() < .5 ? 'en-de' : f ? 'forms' : 'de-en';
@@ -666,7 +666,7 @@ function startGame(cards) {
 const stage = $('#stage'), tilt = $('#tilt'), flip = $('#flip'), fl = $('#float');
 async function nextQ() {
   if (G.i >= G.queue.length) return endGame();
-  const q = G.q = G.queue[G.i]; q.hints = 0; q.typeIt = G.level === 'leicht' && q.dir !== 'forms' && Math.random() < .3; q.listen = G.level === 'schwer' && q.dir === 'en-de' && Math.random() < .35 && !!window.speechSynthesis;
+  const q = G.q = G.queue[G.i]; q.hints = 0; q.typeIt = false; q.listen = G.level === 'schwer' && q.dir === 'en-de' && Math.random() < .35 && !!window.speechSynthesis;
   G.busy = true; stopTimer(); $('#answer-area').innerHTML = ''; $('#timer').hidden = true;
   const r = rarity(q.c), from = q.dir === 'de-en' ? 'de' : 'en', to = q.dir === 'en-de' ? 'de' : 'en', forms = q.dir === 'forms';
   const text = { en: q.c.en, de: q.c.de };
@@ -680,7 +680,7 @@ async function nextQ() {
   void fl.offsetWidth; fl.classList.add('deal'); sfx('flip');
   $('#prog').style.width = (G.i / G.queue.length * 100) + '%';
   await wait(750); fl.classList.remove('deal');
-  if (q.listen || ((q.dir === 'en-de' || q.dir === 'forms') && db.set.autospeak)) speak(q.c.en, 'en');
+  if (q.listen || db.set.autospeak) { if (q.dir === 'de-en') speak(q.c.de, 'de'); else speak(q.c.en, 'en'); }
   buildAnswer(q, to, forms ? q.c.forms : text[to]); G.busy = false;
   if (LV[G.level].time && !db.set.calm) startTimer(LV[G.level].time);
 }
@@ -689,7 +689,7 @@ function faceHTML(q, r, from, word, front) {
   <div class="art"><div class="flag">${q.listen ? '👂' : animeSVG(q.c.en)}</div>
   <div class="word ${word.length > 14 ? 'sm' : ''} ${q.listen ? 'listen' : ''}">${esc(word)}</div>
   ${q.listen ? '<div class="sub">Hör genau hin!</div>' : ''}${q.dir === 'forms' ? `<div class="sub">${esc(q.c.de)}<br><b>Past &amp; Participle?</b></div>` : ''}
-  <div class="spks">${from === 'en' ? '<button class="spk" data-say="en">🔊 Anhören</button><button class="spk slow" data-say="en-slow">🐢</button>' : ''}</div></div>
+  <div class="spks"><button class="spk" data-say="${from}">🔊 Anhören</button>${from === 'en' ? '<button class="spk slow" data-say="en-slow">🐢</button>' : ''}</div></div>
   <div class="pwr">MERK-POWER<div class="pb"><i style="width:${q.c.box * 25}%"></i></div></div>`;
 }
 stage.addEventListener('click', e => { const b = e.target.closest('[data-say]'); if (!b || !G || !G.q) return; e.stopPropagation(); const k = b.dataset.say; if (k.startsWith('forms')) { speak(`${G.q.c.en}, ${G.q.c.forms.join(', ')}`, 'en', k === 'forms-slow'); return; } speak(k === 'en-slow' ? G.q.c.en : k === 'en' ? G.q.c.en : G.q.c.de, k.startsWith('en') ? 'en' : 'de', k === 'en-slow'); });
@@ -698,10 +698,11 @@ function buildAnswer(q, to, answer) {
   const area = $('#answer-area'), lvl = q.typeIt ? 'mittel' : G.level;
   if (q.dir === 'forms') {
     const mid = G.level !== 'schwer';
-    area.innerHTML = `<div class="typebox"><input id="i1" placeholder="Simple past" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><input id="i2" placeholder="Past participle" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div><div class="typebox"><button class="btn primary" id="go" style="flex:1">OK</button></div>${G.level === 'mittel' ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}`;
+    area.innerHTML = `<div class="typebox"><input id="i1" placeholder="Simple past" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><input id="i2" placeholder="Past participle" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div><div class="typebox"><button class="btn primary" id="go" style="flex:1">OK</button></div><div class="row center">${G.level === 'mittel' ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}<button class="btn" id="skip">🤷 Weiß ich nicht</button></div>`;
+    $('#skip').onclick = () => resolve('bad', '');
     const i1 = $('#i1'), i2 = $('#i2'), hint = n => { i1.placeholder = [...answer[0]][0] + ' …'; i2.placeholder = [...answer[1]][0] + ' …'; };
     if (G.level === 'leicht') hint(); if ($('#tip')) $('#tip').onclick = () => { q.hints++; hint(); sfx('tap'); };
-    const submit = () => { if (G.busy || !i1.value.trim() || !i2.value.trim()) return; const r = [judge(i1.value, answer[0], !mid), judge(i2.value, answer[1], !mid)]; resolve(r.includes('bad') ? 'bad' : r.includes('close') ? 'close' : 'ok', `${i1.value} · ${i2.value}`); };
+    const submit = () => { if (G.busy) return; if (!i1.value.trim() && !i2.value.trim()) { toast('Schreib etwas auf – oder tippe „Weiß ich nicht“'); i1.focus(); return; } const r = [judge(i1.value, answer[0], !mid), judge(i2.value, answer[1], !mid)]; resolve(r.includes('bad') ? 'bad' : r.includes('close') ? 'close' : 'ok', `${i1.value} · ${i2.value}`); };
     $('#go').onclick = submit; [i1, i2].forEach(i => i.onkeydown = e => { if (e.key === 'Enter') submit(); });
     if (!matchMedia('(pointer:coarse)').matches) i1.focus(); return;
   }
@@ -714,9 +715,10 @@ function buildAnswer(q, to, answer) {
   } else {
     const mid = lvl === 'mittel';
     area.innerHTML = `${q.typeIt ? '<div class="typeit">✍️ Schreib es selbst auf!</div>' : ''}${mid ? '<div class="pattern" id="pat"></div>' : ''}<div class="typebox"><input id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${to === 'en' ? 'Auf Englisch …' : 'Auf Deutsch …'}"><button class="btn primary" id="go">OK</button></div>
-      ${mid ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}`;
+      <div class="row center">${mid ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}<button class="btn" id="skip">🤷 Weiß ich nicht</button></div>`;
+    $('#skip').onclick = () => resolve('bad', '');
     const inp = $('#inp'); if (mid) { drawPattern(answer, 1); $('#tip').onclick = () => { q.hints++; drawPattern(answer, 1 + q.hints); sfx('tap'); inp.focus(); }; }
-    const submit = () => { if (G.busy || !inp.value.trim()) return; resolve(judge(inp.value, answer, !mid), inp.value); };
+    const submit = () => { if (G.busy) return; if (!inp.value.trim()) { toast('Schreib etwas auf – oder tippe „Weiß ich nicht“'); inp.focus(); return; } resolve(judge(inp.value, answer, !mid), inp.value); };
     $('#go').onclick = submit; inp.onkeydown = e => { if (e.key === 'Enter') submit(); };
     if (!matchMedia('(pointer:coarse)').matches) inp.focus();
   }
@@ -746,6 +748,7 @@ async function resolve(res, input = '', timeout = false) {
   await wait(700); fl.classList.add(ok ? 'win' : 'shake'); if (ok && G.combo >= 3) confetti(30);
   // Aussprache: Englisches Wort nach der Antwort vorlesen (bei DE→EN)
   if (q.dir === 'de-en' && db.set.autospeak) setTimeout(() => speak(c.en, 'en'), 300);
+  if (q.dir === 'en-de' && db.set.autospeak) setTimeout(() => speak(c.de, 'de'), 300);
   if (q.dir === 'forms' && db.set.autospeak) setTimeout(() => speak(`${c.en}, ${c.forms.join(', ')}`, 'en'), 300);
   $('#answer-area').innerHTML = `<button class="btn primary next" id="next">${G.i + 1 >= G.queue.length ? '🏁 Fertig' : 'Weiter ▶'}</button>`;
   $('#next').onclick = async () => { $('#next').disabled = true; fl.className = 'float out'; sfx('flip'); await wait(420); G.i++; nextQ(); };
