@@ -6,7 +6,7 @@ self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Pro
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const u = new URL(e.request.url), same = u.origin === location.origin;
-  const ocr = /jsdelivr|unpkg|tessdata|projectnaptha|cdnjs/.test(u.hostname);
+  const ocr = false;
   if (!same && !ocr) return;
   e.respondWith(
     same ? fetch(e.request).then(r => { const c = r.clone(); caches.open(V).then(x => x.put(e.request, c)); return r; }).catch(() => caches.match(e.request))

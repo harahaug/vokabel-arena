@@ -199,7 +199,34 @@ function speak(text, lang = 'en', slow = false) {
 
 /* ---------- Anime-Figuren (pro Wort automatisch, als SVG) ---------- */
 function hash(str) { let h = 2166136261; for (const c of str.toLowerCase()) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
-function animeSVG(seed) {
+const themeOf = () => (profiles.find(p => p.id === curId) || {}).theme || 'anime';
+function vampireSVG(seed) {
+  const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length], dk = '#14102e';
+  const hair = pick(['#1a1a2e', '#3b0a2a', '#e8e8ff', '#5a1a8a'], 0), eye = pick(['#ff1744', '#ff5252', '#ff9100', '#d500f9'], 3), cape = pick(['#7a0019', '#3a0a5a', '#0b0b2a'], 6);
+  const bats = (h >>> 9) & 1 ? `<path d="M96 24q8-8 14 0q6-6 10 2q-8 0-10 8q-3-6-14-10z" fill="${dk}"/>` : '';
+  return `<svg class="anime" viewBox="0 0 120 120" aria-hidden="true">${bats}
+  <path d="M14 120L26 86Q60 112 94 86L106 120Z" fill="${cape}" stroke="${dk}" stroke-width="2.5"/><path d="M26 86L40 120M94 86L80 120" stroke="#000" stroke-opacity=".3" stroke-width="2"/>
+  <ellipse cx="60" cy="66" rx="31" ry="36" fill="#f3e9f2" stroke="${dk}" stroke-width="2.5"/>
+  <path d="M26 64Q20 20 60 16Q100 20 94 64Q90 40 76 34L60 46L44 34Q30 40 26 64Z" fill="${hair}" stroke="${dk}" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M24 30L12 8L40 22ZM96 30L108 8L80 22Z" fill="${hair}" stroke="${dk}" stroke-width="2.5" opacity="0"/>
+  <path d="M33 62Q45 54 57 62L55 74Q45 80 35 74Z" fill="#fff" stroke="${dk}" stroke-width="2.5"/><path d="M63 62Q75 54 87 62L85 74Q75 80 65 74Z" fill="#fff" stroke="${dk}" stroke-width="2.5"/>
+  <ellipse cx="45" cy="68" rx="6" ry="8" fill="${eye}"/><ellipse cx="75" cy="68" rx="6" ry="8" fill="${eye}"/><ellipse cx="45" cy="69" rx="2" ry="5" fill="${dk}"/><ellipse cx="75" cy="69" rx="2" ry="5" fill="${dk}"/><circle cx="43" cy="65" r="2" fill="#fff"/><circle cx="73" cy="65" r="2" fill="#fff"/>
+  <path d="M33 58L57 60M87 58L63 60" stroke="${dk}" stroke-width="4" stroke-linecap="round"/>
+  <path d="M50 87Q60 92 70 87" fill="#fff" stroke="${dk}" stroke-width="2.5"/><path d="M53 88l2 7 3-6M67 88l-2 7-3-6" fill="#fff" stroke="${dk}" stroke-width="1.5" stroke-linejoin="round"/>
+  <ellipse cx="36" cy="82" rx="5" ry="3" fill="#ff5a7a" opacity=".45"/><ellipse cx="84" cy="82" rx="5" ry="3" fill="#ff5a7a" opacity=".45"/></svg>`;
+}
+function blockySVG(seed) {
+  const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length], dk = '#14102e';
+  const skin = pick(['#ffd9b3', '#e8b98a', '#c68c5a', '#f7d6c4'], 0), hair = pick(['#3a2a1a', '#ffcc33', '#ff3d8b', '#2d9cff', '#35e08a', '#8a5cff'], 3), shirt = pick(['#ff7043', '#29b6f6', '#66bb6a', '#ab47bc', '#ffee58'], 6), style = (h >>> 9) % 3;
+  const top = style === 0 ? `<rect x="22" y="14" width="76" height="22" fill="${hair}" stroke="${dk}" stroke-width="3"/>` : style === 1 ? `<rect x="22" y="14" width="76" height="22" fill="${hair}" stroke="${dk}" stroke-width="3"/><rect x="14" y="30" width="14" height="40" fill="${hair}" stroke="${dk}" stroke-width="3"/><rect x="92" y="30" width="14" height="40" fill="${hair}" stroke="${dk}" stroke-width="3"/>` : `<rect x="30" y="4" width="60" height="30" fill="${hair}" stroke="${dk}" stroke-width="3"/><rect x="22" y="30" width="76" height="8" fill="${hair}" stroke="${dk}" stroke-width="3"/>`;
+  return `<svg class="anime" viewBox="0 0 120 120" aria-hidden="true">
+  <rect x="26" y="92" width="68" height="28" fill="${shirt}" stroke="${dk}" stroke-width="3"/>
+  <rect x="24" y="28" width="72" height="66" fill="${skin}" stroke="${dk}" stroke-width="3"/>${top}
+  <rect x="38" y="56" width="14" height="16" fill="#fff" stroke="${dk}" stroke-width="3"/><rect x="68" y="56" width="14" height="16" fill="#fff" stroke="${dk}" stroke-width="3"/><rect x="44" y="60" width="8" height="12" fill="${dk}"/><rect x="74" y="60" width="8" height="12" fill="${dk}"/>
+  <rect x="48" y="80" width="24" height="6" fill="${dk}"/><rect x="30" y="76" width="8" height="6" fill="#ff8fab" opacity=".6"/><rect x="82" y="76" width="8" height="6" fill="#ff8fab" opacity=".6"/></svg>`;
+}
+function animeSVG(seed, theme = themeOf()) {
+  if (theme === 'vampir') return vampireSVG(seed); if (theme === 'blocky') return blockySVG(seed);
   const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length];
   const hair = pick(['#1a1a2e', '#ff3d8b', '#2d9cff', '#8a5cff', '#e8f0ff', '#12d6a0', '#ff7a2d', '#c0392b'], 0);
   const hi = pick(['#6a7bff', '#ff9ac8', '#9fd0ff', '#d2b8ff', '#ffffff', '#a0ffe0', '#ffd09a', '#ff9a8a'], 0);
@@ -234,7 +261,7 @@ function login(id) { curId = id; ls.set(CK, id); loadDB(); fillUnits(); refresh(
 function renderProfiles() {
   $('#prof-grid').innerHTML = profiles.map((p, i) => `<div class="mc r${(hash(p.name) % 4) + 1}" data-id="${p.id}" style="animation-delay:${i * 60}ms">
     <div class="t"><span>SPIELER</span><button class="pdel" data-del="${p.id}" aria-label="Löschen">✖</button></div>
-    <div class="in">${animeSVG(p.name)}<b>${esc(p.name)}</b></div><div class="pw"><i style="width:100%"></i></div></div>`).join('');
+    <div class="in">${animeSVG(p.name, p.theme || 'anime')}<b>${esc(p.name)}</b></div><div class="pw"><i style="width:100%"></i></div></div>`).join('');
 }
 $('#prof-grid').onclick = e => {
   const d = e.target.closest('[data-del]');
@@ -244,7 +271,7 @@ $('#prof-grid').onclick = e => {
 function addProfile() {
   const name = norm0($('#prof-name').value); if (!name) { toast('Bitte einen Namen eingeben'); return; }
   if (profiles.some(p => p.name.toLowerCase() === name.toLowerCase())) { toast('Den Namen gibt es schon'); return; }
-  const p = { id: 'p' + uid(), name }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
+  const p = { id: 'p' + uid(), name, theme: $('#prof-theme').value }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
 $('#prof-add').onclick = addProfile; $('#prof-name').onkeydown = e => { if (e.key === 'Enter') addProfile(); };
 $('#who').onclick = () => { sfx('tap'); show('profiles'); };
@@ -289,7 +316,8 @@ $('#dlg-form').addEventListener('submit', e => {
 });
 
 /* ---------- Scan (Kamera + OCR im Browser) ---------- */
-const OCR_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+const OCR_URL = 'ocr/tesseract.min.js';   // lokal gehostet – keine Verbindung zu fremden Servern (DSGVO)
+const abs = p => new URL(p, location.href).href;
 function loadOCR() {
   if (window.Tesseract) return Promise.resolve();
   return new Promise((res, rej) => { const s = document.createElement('script'); s.src = OCR_URL; s.onload = res; s.onerror = () => rej(new Error('offline')); document.head.appendChild(s); });
@@ -338,9 +366,10 @@ async function scanFile(file) {
   try {
     const canvas = await prepImage(file);
     const pv = $('#preview'); pv.src = canvas.toDataURL('image/jpeg', .6); pv.hidden = false;
-    txt.textContent = 'Lade Texterkennung (beim 1. Mal ca. 10–20 MB) …';
+    txt.textContent = 'Lade Texterkennung (beim 1. Mal ca. 25 MB) …';
     await loadOCR();
     const { data } = await Tesseract.recognize(canvas, 'eng+deu', {
+      workerPath: abs('ocr/worker.min.js'), corePath: abs('ocr/'), langPath: abs('ocr/lang'), gzip: true,
       logger: m => { if (m.progress != null) { bar.style.width = (10 + m.progress * 90) + '%'; txt.textContent = (m.status || 'lese') + ' … ' + Math.round(m.progress * 100) + '%'; } }
     });
     st.hidden = true;
