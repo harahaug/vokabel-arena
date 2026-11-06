@@ -94,13 +94,14 @@ hurt|hurt|hurt|wehtun, schmerzen; verletzen`.split('\n').map(l => l.split('|'));
 /* ---------- Speicher ---------- */
 const PK = 'vokabelarena.profiles', CK = 'vokabelarena.current', OLD = 'vokabelarena.v1';
 const ls = { get: k => STORE.get(k), set: (k, v) => STORE.set(k, v), del: k => STORE.del(k) };
-const defaults = () => ({ cards: [], set: { dir: 'mix', level: 'mittel', num: '5', calm: true, sound: true, autospeak: true, voice: '', rate: 0.85 }, xp: 0, streak: 0, lastDay: '' });
+const defaults = () => ({ cards: [], set: { dir: 'mix', level: 'mittel', num: '12', calm: true, sound: true, autospeak: true, voice: '', rate: 0.85 }, xp: 0, streak: 0, lastDay: '' });
 let profiles = []; try { profiles = JSON.parse(ls.get(PK)) || []; } catch (e) { }
 if (!profiles.length && ls.get(OLD)) { profiles = [{ id: 'p1', name: 'Ich' }]; ls.set('vokabelarena.v1.p1', ls.get(OLD)); ls.set(PK, JSON.stringify(profiles)); }   // alte Daten übernehmen
 let curId = '', db = defaults();
 const key = () => OLD + '.' + curId;
 const applyCalm = () => document.body.classList.toggle('calm', !!db.set.calm);
-function loadDB() { db = defaults(); try { const raw = JSON.parse(ls.get(key())); if (raw) db = { ...defaults(), ...raw, set: { ...defaults().set, ...raw.set } }; } catch (e) { } }
+function loadDB() { db = defaults(); try { const raw = JSON.parse(ls.get(key())); if (raw) db = { ...defaults(), ...raw, set: { ...defaults().set, ...raw.set } }; } catch (e) { } 
+  if (db.set.num !== 'all' && +db.set.num < 12) db.set.num = '12'; }
 const save = () => { applyCalm(); if (curId) ls.set(key(), JSON.stringify(db)); };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const norm0 = s => s.trim().replace(/\s+/g, ' ');
