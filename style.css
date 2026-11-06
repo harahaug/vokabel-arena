@@ -346,3 +346,15 @@ body.calm .finger{animation:none}
 body.calm .flip.on .face.back{animation:calmReveal .35s ease-out both}
 body.calm .flip.on .face.back .art::after{animation:none}
 @keyframes calmReveal{from{opacity:0}to{opacity:1}}
+
+/* Hintergrund-Farbwelten: Lila (Standard), Dunkelblau, Schwarz */
+:root{--b1:#6a2cff;--b2:#00b7ff;--b3:#ff4fa3;--dlg:#241260;--card:#2a1470}
+html[data-bg=blau]{--bg1:#050d24;--bg2:#0b2a6e;--b1:#1f5bff;--b2:#00b7ff;--b3:#2dd4bf;--dlg:#0e2150;--card:#0e2a6a}
+html[data-bg=schwarz]{--bg1:#000;--bg2:#0e0e12;--b1:#3a3a55;--b2:#26263a;--b3:#4a2a5a;--dlg:#15151b;--card:#1a1a22}
+.bg span:nth-child(1){background:var(--b1)}.bg span:nth-child(2){background:var(--b2)}.bg span:nth-child(3){background:var(--b3)}
+html[data-bg=schwarz] .bg span{opacity:.28}
+.tour-card{background:linear-gradient(160deg,var(--card),var(--bg1))}
+dialog{background:var(--dlg)}
+.stickybar{background:linear-gradient(transparent,var(--bg1) 45%)}
+.bgb{width:54px;height:54px;border-radius:16px;border:3px solid transparent;cursor:pointer;min-width:54px}
+.bgb.on{border-color:var(--pri);box-shadow:0 0 0 2px #0006,0 6px 14px rgba(0,0,0,.45);transform:translateY(-2px)}

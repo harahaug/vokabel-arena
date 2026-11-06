@@ -99,7 +99,9 @@ let profiles = []; try { profiles = JSON.parse(ls.get(PK)) || []; } catch (e) { 
 if (!profiles.length && ls.get(OLD)) { profiles = [{ id: 'p1', name: 'Ich' }]; ls.set('vokabelarena.v1.p1', ls.get(OLD)); ls.set(PK, JSON.stringify(profiles)); }   // alte Daten übernehmen
 let curId = '', db = defaults();
 const key = () => OLD + '.' + curId;
-const applyCalm = () => document.body.classList.toggle('calm', !!db.set.calm);
+const BG = { lila: '#1b1147', blau: '#07163a', schwarz: '#000000' };
+const applyBg = () => { const k = BG[db.set.bg] ? db.set.bg : 'lila'; document.documentElement.dataset.bg = k; const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = BG[k]; };
+const applyCalm = () => { document.body.classList.toggle('calm', !!db.set.calm); applyBg(); };
 function loadDB() { db = defaults(); try { const raw = JSON.parse(ls.get(key())); if (raw) db = { ...defaults(), ...raw, set: { ...defaults().set, ...raw.set } }; } catch (e) { } 
   if (db.set.num !== 'all' && +db.set.num < 12) db.set.num = '12'; }
 const save = () => { applyCalm(); if (curId) ls.set(key(), JSON.stringify(db)); };
@@ -609,6 +611,7 @@ function renderSettings() {
   const en = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
   { const e = pickVoice('en'), d = pickVoice('de'); $('#voice-best').textContent = window.speechSynthesis ? `Gewählt: Englisch – ${e ? e.name : 'Standardstimme'} · Deutsch – ${d ? d.name : 'Standardstimme'}` : ''; }
   $('#rate').value = db.set.rate; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×';
+  $$('#bg-pick button').forEach(b => b.classList.toggle('on', b.dataset.v === (BG[db.set.bg] ? db.set.bg : 'lila')));
   $('#calm').checked = !!db.set.calm; $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak; $('#slang').checked = db.set.slang !== false;
   $('#store-info').textContent = '💾 Deine Karten werden automatisch in der Datenbank dieses Geräts gespeichert (' + STORE.mode + (STORE.persistent ? ', dauerhaft gesichert' : '') + ').';
   $('#tts-status').textContent = lastTts;
@@ -617,6 +620,7 @@ function renderSettings() {
 }
 $('#rate').oninput = e => { db.set.rate = +e.target.value; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×'; save(); };
 $('#voice-test').onclick = () => speak('The weather is beautiful today. Let us climb the mountain!');
+$('#bg-pick').onclick = e => { const b = e.target.closest('button'); if (!b) return; db.set.bg = b.dataset.v; save(); sfx('tap'); renderSettings(); };
 $('#calm').onchange = e => { db.set.calm = e.target.checked; save(); refresh(); };
 $('#sound').onchange = e => { db.set.sound = e.target.checked; save(); };
 $('#autospeak').onchange = e => { db.set.autospeak = e.target.checked; save(); };
@@ -896,3 +900,5 @@ $('#tour-next').onclick = () => { sfx('tap'); if (tourI < TOUR.length - 1) { tou
 $('#tour-skip').onclick = closeTour;
 $('#tour-open').onclick = () => { sfx('tap'); openTour(); };
 $('#tour-body').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) speak(b.dataset.w, b.dataset.l); });
+
+applyBg();
