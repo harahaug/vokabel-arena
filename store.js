@@ -30,10 +30,14 @@
     set: function (k, v) { mem[k] = v; if (idb) put(k, v); else try { localStorage.setItem(k, v); } catch (e) { } },
     del: function (k) { delete mem[k]; if (idb) { try { idb.transaction(ST, 'readwrite').objectStore(ST).delete(k); } catch (e) { } } else try { localStorage.removeItem(k); } catch (e) { } }
   };
-  function start() {
-    var a = document.createElement('script'); a.src = 'slang.js';
-    a.onload = a.onerror = function () { var s = document.createElement('script'); s.src = 'app.js'; document.body.appendChild(s); };
-    document.body.appendChild(a);
+  function start() {   // nacheinander laden: Sprüche, Beispielsätze, dann die App
+    var files = ['slang.js', 'examples.js', 'app.js'];
+    (function next(i) {
+      if (i >= files.length) return;
+      var s = document.createElement('script'); s.src = files[i];
+      s.onload = s.onerror = function () { next(i + 1); };
+      document.body.appendChild(s);
+    })(0);
   }
   openDB().then(function (d) {
     idb = d;

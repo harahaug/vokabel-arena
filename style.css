@@ -367,3 +367,13 @@ dialog{background:var(--dlg)}
 body.calm .sing.go{animation:singIn .3s ease both,singOut .4s 4.3s ease-in forwards}
 
 .seg.gender{grid-template-columns:repeat(3,1fr);margin:6px 0 10px}.seg.gender button b{font-size:26px}
+
+mark{background:#ffd23f;color:#1b1147;border-radius:6px;padding:0 5px;font-weight:900}
+.rows.lo input[type=text]{border-color:#ff9a3d;box-shadow:0 0 0 2px rgba(255,154,61,.35)}
+.quick-txt{width:100%;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;padding:12px;color:#fff;font-size:16px;margin:6px 0 10px;font-family:inherit}
+.pg-row{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;margin:8px 0;font-size:15px}.pg-row b{text-align:right}
+.pg-bar{height:14px;border-radius:9px;background:rgba(0,0,0,.35);overflow:hidden}.pg-bar i{display:block;height:100%;border-radius:9px}
+.pg-bar .c0{background:#8a96b8}.pg-bar .c1{background:#3b8cff}.pg-bar .c2{background:#c23cff}.pg-bar .c3{background:#ffd23f}
+.big-num{font-size:40px;font-weight:900;margin:4px 0 8px}.big-num small{font-size:15px;font-weight:400;color:var(--mut)}
+.week{display:flex;gap:6px;align-items:flex-end;height:130px}.week>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;font-size:13px}
+.week i{display:block;width:100%;max-width:34px;background:linear-gradient(180deg,#35e08a,#3de1ff);border-radius:8px 8px 3px 3px}.week span{color:var(--mut)}

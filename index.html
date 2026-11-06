@@ -63,6 +63,7 @@
       <p id="home-sub">Englisch</p>
       <p class="by">✨ Erstellt von <b>Harald Haug</b></p>
       <button class="chip me" id="edit-me" type="button">✏️ Meine Figur ändern</button>
+      <button class="chip me" id="progress-open" type="button">📈 Mein Fortschritt</button>
       <button class="chip me" id="tour-open" type="button">❓ Wie geht das?</button>
     </div>
     <div class="panel center" id="home-empty" hidden>
@@ -93,7 +94,8 @@
           <select id="scan-left"><option value="en">Englisch</option><option value="de">Deutsch</option></select></label></div>
         <div class="row small"><label>Lektion / Unit (optional)
           <input id="scan-unit" list="units" placeholder="z. B. Unit 3" autocomplete="off" style="width:150px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25)"></label></div>
-        <div class="row"><button class="btn" id="manual">⌨️ Karte von Hand tippen</button></div>
+        <div class="row"><button class="btn" id="manual">⌨️ Karte von Hand tippen</button><button class="btn" id="quick-open">📝 Viele auf einmal tippen</button></div>
+        <div id="quick" hidden><p class="hint">Eine Zeile pro Wort, z. B. <b>apple – Apfel</b></p><textarea id="quick-txt" rows="8" class="quick-txt" placeholder="apple – Apfel&#10;to go – gehen&#10;house – Haus"></textarea><button class="btn primary" id="quick-go" type="button">Weiter zur Prüfung ▶</button></div>
       </details>
       <img id="preview" alt="" hidden>
       <div id="ocr-status" class="status" hidden>
@@ -102,6 +104,7 @@
     </div>
     <div class="panel" id="review" hidden>
       <h3>✏️ Stimmt alles?</h3>
+      <p class="hint" id="lo-hint" hidden>🟠 Orange Zeilen hat die App unsicher gelesen – bitte genau prüfen.</p>
       <p class="hint">Ändere falsche Wörter einfach. Nicht passende Zeilen: Haken weg oder ✖.</p>
       <div id="review-head" class="rows head"></div>
       <div id="review-rows"></div>
@@ -114,6 +117,7 @@
   <section class="view" id="v-library" hidden>
     <h2>🗂️ Meine Karten <small id="lib-count"></small></h2>
     <input class="search" id="lib-search" type="search" placeholder="Suchen …">
+    <div class="row"><label class="btn file">📥 Liste importieren<input type="file" id="lib-import" accept=".csv,.txt,text/csv,text/plain"></label><button class="btn" id="lib-export" type="button">📤 Liste teilen (CSV)</button></div>
     <div class="grid" id="lib-grid"></div>
     <div class="row"><button class="btn" id="load-verbs2">🎁 Irregular verbs (S. 255) laden</button></div>
     <div class="empty" id="lib-empty" hidden>
@@ -203,6 +207,13 @@
     </div>
   </section>
 
+  <!-- PROGRESS -->
+  <section class="view" id="v-progress" hidden>
+    <h2>📈 Mein Fortschritt</h2>
+    <div id="progress-body"></div>
+    <button class="btn primary huge" id="prog-share" type="button">📤 Meinem Lehrer / meinen Eltern zeigen</button>
+  </section>
+
   <!-- SETTINGS -->
   <section class="view" id="v-settings" hidden>
     <h2>⚙️ Einstellungen</h2>
@@ -260,6 +271,8 @@
     <label class="field">🇬🇧 Englisch<input id="dlg-en" autocomplete="off" autocapitalize="off"></label>
     <label class="field">🇩🇪 Deutsch<input id="dlg-de" autocomplete="off"></label>
     <label class="field">🔁 Verb-Formen (Past, Participle) – nur bei unregelmäßigen Verben<input id="dlg-forms" autocomplete="off" placeholder="z. B. went, gone"></label>
+    <label class="field">💬 Beispielsatz (Englisch, optional)<input id="dlg-ex" autocomplete="off" placeholder="z. B. We went to the beach."></label>
+    <label class="field">🇩🇪 Übersetzung des Satzes (optional)<input id="dlg-exde" autocomplete="off"></label>
     <label class="field">📘 Lektion / Unit<input id="dlg-unit" list="units" autocomplete="off" placeholder="z. B. Unit 3"></label>
     <div class="row">
       <button class="btn" id="dlg-speak" type="button">🔊</button>

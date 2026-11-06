@@ -103,19 +103,33 @@ const BG = { lila: '#1b1147', blau: '#07163a', schwarz: '#000000' };
 const applyBg = () => { const k = BG[db.set.bg] ? db.set.bg : 'lila'; document.documentElement.dataset.bg = k; const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = BG[k]; };
 const applyCalm = () => { document.body.classList.toggle('calm', !!db.set.calm); applyBg(); };
 function loadDB() { db = defaults(); try { const raw = JSON.parse(ls.get(key())); if (raw) db = { ...defaults(), ...raw, set: { ...defaults().set, ...raw.set } }; } catch (e) { } 
-  if (db.set.num !== 'all' && +db.set.num < 12) db.set.num = '12'; }
+  if (db.set.num !== 'all' && +db.set.num < 12) db.set.num = '12'; if (fillExamples()) save(); }
 const save = () => { applyCalm(); if (curId) ls.set(key(), JSON.stringify(db)); };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const norm0 = s => s.trim().replace(/\s+/g, ' ');
+/* Beispielsätze: Lösungswort im Satz finden (für Lückenübungen) */
+function deriveExw(c) {
+  if (!c.ex) return undefined;
+  const base = c.en.replace(/^to /i, ''), cand = [];
+  if (c.forms) cand.push(...c.forms[0].split('/').map(x => x.trim()), c.forms[0]);
+  cand.push(c.en, base); const low = c.ex.toLowerCase();
+  for (const w of cand) { const i = w.replace(/\s*\(.*?\)/g, '').trim(); if (i && low.includes(i.toLowerCase())) { const k = low.indexOf(i.toLowerCase()); return c.ex.slice(k, k + i.length); } }
+  return undefined;
+}
+function fillExamples() {
+  const E = window.EXAMPLES || {}; let ch = false;
+  for (const c of db.cards) if (!c.ex) { const e = E[c.en.toLowerCase()]; if (e) { c.ex = e[0]; c.exde = e[1]; c.exw = e[2]; ch = true; } }
+  return ch;
+}
 function addCards(pairs, unit = '') {
   let n = 0;
   const seen = new Set(db.cards.map(c => c.en.toLowerCase() + '|' + c.de.toLowerCase()));
-  for (const [en, de] of pairs) {
+  for (const [en, de, ex, exde, u] of pairs) {
     const e = norm0(en), d = norm0(de); if (!e || !d) continue;
     const k = e.toLowerCase() + '|' + d.toLowerCase(); if (seen.has(k)) continue;
-    seen.add(k); db.cards.push({ id: uid(), added: Date.now(), en: e, de: d, unit: norm0(unit), box: 0, ok: 0, bad: 0 }); n++;
+    seen.add(k); const card = { id: uid(), added: Date.now(), en: e, de: d, unit: norm0(u || unit), box: 0, ok: 0, bad: 0 }; if (ex) { card.ex = norm0(ex); card.exde = norm0(exde || ''); card.exw = deriveExw(card); } db.cards.push(card); n++;
   }
-  save(); refresh(); fillUnits(); return n;
+  fillExamples(); save(); refresh(); fillUnits(); return n;
 }
 function addVerbs(rows, unit = 'Irregular verbs') {
   let n = 0; const seen = new Set(db.cards.map(c => c.en.toLowerCase() + '|' + c.de.toLowerCase()));
@@ -125,7 +139,7 @@ function addVerbs(rows, unit = 'Irregular verbs') {
     const en = 'to ' + i, k = en.toLowerCase() + '|' + d.toLowerCase(); if (seen.has(k)) continue;
     seen.add(k); db.cards.push({ id: uid(), added: Date.now(), en, de: d, forms: [p, q], unit: norm0(unit), box: 0, ok: 0, bad: 0 }); n++;
   }
-  save(); refresh(); fillUnits(); return n;
+  fillExamples(); save(); refresh(); fillUnits(); return n;
 }
 const addedOf = c => c.added || parseInt(c.id.slice(0, -4), 36) || 0;
 const dayStart = (d = new Date()) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -150,6 +164,7 @@ function show(name) {
   views.forEach(v => v.hidden = v.id !== 'v-' + name);
   window.scrollTo(0, 0);
   if (name === 'library') renderLib();
+  if (name === 'progress') renderProgress();
   if (name === 'setup') renderSetup();
   if (name === 'settings') renderSettings();
   if (name !== 'game') stopTimer();
@@ -520,6 +535,7 @@ function editCard(id) {
   editing = id ? db.cards.find(c => c.id === id) : null;
   $('#dlg-title').textContent = editing ? 'Karte bearbeiten' : 'Neue Karte';
   $('#dlg-en').value = editing ? editing.en : ''; $('#dlg-de').value = editing ? editing.de : ''; $('#dlg-unit').value = editing ? editing.unit || '' : ''; $('#dlg-forms').value = editing && editing.forms ? editing.forms.join(', ') : '';
+  $('#dlg-ex').value = editing && editing.ex ? editing.ex : ''; $('#dlg-exde').value = editing && editing.exde ? editing.exde : '';
   $('#dlg-del').hidden = !editing; dlg.showModal();
 }
 $('#manual').onclick = () => editCard(null);
@@ -530,7 +546,8 @@ $('#dlg-form').addEventListener('submit', e => {
     const en = norm0($('#dlg-en').value), de = norm0($('#dlg-de').value);
     if (!en || !de) { e.preventDefault(); toast('Bitte beide Felder ausfüllen'); return; }
     const fm = $('#dlg-forms').value.split(',').map(norm0).filter(Boolean); const forms = fm.length === 2 ? fm : null;
-    if (editing) { editing.forms = forms || undefined; editing.en = en; editing.de = de; editing.unit = norm0($('#dlg-unit').value); save(); fillUnits(); } else { addCards([[en, de]], $('#dlg-unit').value); if (forms) { const c = db.cards[db.cards.length - 1]; c.forms = forms; save(); } }
+    const ex = norm0($('#dlg-ex').value), exde = norm0($('#dlg-exde').value);
+    if (editing) { editing.forms = forms || undefined; editing.en = en; editing.de = de; editing.unit = norm0($('#dlg-unit').value); editing.ex = ex || undefined; editing.exde = exde || undefined; editing.exw = deriveExw(editing); save(); fillUnits(); } else { addCards([[en, de, ex, exde]], $('#dlg-unit').value); if (forms) { const c = db.cards[db.cards.length - 1]; c.forms = forms; c.exw = deriveExw(c); save(); } }
     renderLib(); refresh(); toast('✅ Gespeichert');
   }
 });
@@ -542,16 +559,31 @@ function loadOCR() {
   if (window.Tesseract) return Promise.resolve();
   return new Promise((res, rej) => { const s = document.createElement('script'); s.src = OCR_URL; s.onload = res; s.onerror = () => rej(new Error('offline')); document.head.appendChild(s); });
 }
-async function prepImage(file) {
+async function prepImage(file, adaptive = true) {
   const bmp = await createImageBitmap(file).catch(() => null);
   const img = bmp || await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
   const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
   const c = document.createElement('canvas'); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
   const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
-  const d = x.getImageData(0, 0, c.width, c.height), p = d.data; let lo = 255, hi = 0;
-  for (let i = 0; i < p.length; i += 4) { const g = .3 * p[i] + .59 * p[i + 1] + .11 * p[i + 2]; p[i] = g; if (g < lo) lo = g; if (g > hi) hi = g; }
-  const k = 255 / Math.max(40, hi - lo);                 // Kontrast strecken
-  for (let i = 0; i < p.length; i += 4) { const v = Math.max(0, Math.min(255, (p[i] - lo) * k)); p[i] = p[i + 1] = p[i + 2] = v; }
+  const d = x.getImageData(0, 0, c.width, c.height), p = d.data, w = c.width, h = c.height; let lo = 255, hi = 0;
+  const g = new Uint8Array(w * h);
+  for (let i = 0, j = 0; i < p.length; i += 4, j++) { const v = .3 * p[i] + .59 * p[i + 1] + .11 * p[i + 2]; g[j] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+  if (adaptive) {   // Schatten im Heft ausgleichen: Pixel mit dem Durchschnitt ihrer Umgebung vergleichen
+    const W = w + 1, ii = new Float64Array(W * (h + 1));
+    for (let y = 0; y < h; y++) { let row = 0; for (let xx = 0; xx < w; xx++) { row += g[y * w + xx]; ii[(y + 1) * W + xx + 1] = ii[y * W + xx + 1] + row; } }
+    const r = Math.max(12, Math.round(w / 45));
+    for (let y = 0; y < h; y++) {
+      const y0 = Math.max(0, y - r), y1 = Math.min(h, y + r + 1);
+      for (let xx = 0; xx < w; xx++) {
+        const x0 = Math.max(0, xx - r), x1 = Math.min(w, xx + r + 1), area = (y1 - y0) * (x1 - x0);
+        const mean = (ii[y1 * W + x1] - ii[y0 * W + x1] - ii[y1 * W + x0] + ii[y0 * W + x0]) / area, o = (y * w + xx) * 4, v = g[y * w + xx] < mean * .9 ? 0 : 255;
+        p[o] = p[o + 1] = p[o + 2] = v;
+      }
+    }
+  } else {
+    const k = 255 / Math.max(40, hi - lo);                 // Kontrast strecken
+    for (let i = 0, j = 0; i < p.length; i += 4, j++) { const v = Math.max(0, Math.min(255, (g[j] - lo) * k)); p[i] = p[i + 1] = p[i + 2] = v; }
+  }
   x.putImageData(d, 0, 0);
   return c;
 }
@@ -584,18 +616,26 @@ async function scanFile(file) {
   const st = $('#ocr-status'), bar = $('#ocr-bar'), txt = $('#ocr-text');
   st.hidden = false; $('#review').hidden = true; bar.style.width = '4%'; txt.textContent = 'Foto wird vorbereitet …';
   try {
-    const canvas = await prepImage(file);
-    const pv = $('#preview'); pv.src = canvas.toDataURL('image/jpeg', .6); pv.hidden = false;
-    txt.textContent = 'Lade Texterkennung (beim 1. Mal ca. 25 MB) …';
-    await loadOCR();
-    const { data } = await Tesseract.recognize(canvas, 'eng+deu', {
-      workerPath: abs('ocr/worker.min.js'), corePath: abs('ocr/'), langPath: abs('ocr/lang'), gzip: true,
-      logger: m => { if (m.progress != null) { bar.style.width = (10 + m.progress * 90) + '%'; txt.textContent = (m.status || 'lese') + ' … ' + Math.round(m.progress * 100) + '%'; } }
-    });
-    st.hidden = true;
     scanMode = $('#scan-mode').value;
-    if (scanMode === 'verbs') scanRows = parseVerbs(data.text).map(t => ({ t, on: true }));
-    else { let r = parseOCR(data.text); if ($('#scan-left').value === 'de') r = r.map(([a, b]) => [b, a]); scanRows = r.map(t => ({ t, on: !!(t[0] || t[1]) })); }
+    await loadOCR();
+    let best = [];
+    for (const adaptive of [true, false]) {
+      const canvas = await prepImage(file, adaptive);
+      if (adaptive) { const pv = $('#preview'); pv.src = canvas.toDataURL('image/jpeg', .6); pv.hidden = false; }
+      txt.textContent = adaptive ? 'Ich lese dein Heft …' : 'Noch ein Versuch mit anderer Bildaufbereitung …';
+      const { data } = await Tesseract.recognize(canvas, 'eng+deu', {
+        workerPath: abs('ocr/worker.min.js'), corePath: abs('ocr/'), langPath: abs('ocr/lang'), gzip: true,
+        logger: m => { if (m.progress != null) { bar.style.width = (10 + m.progress * 90) + '%'; } }
+      });
+      const rows = [];
+      for (const l of (data.lines && data.lines.length ? data.lines : (data.text || '').split('\n').map(t => ({ text: t, confidence: 50 })))) {
+        const t = (scanMode === 'verbs' ? parseVerbs(l.text) : parseOCR(l.text))[0]; if (!t) continue;
+        rows.push({ t: scanMode !== 'verbs' && $('#scan-left').value === 'de' ? [t[1], t[0]] : t, on: scanMode === 'verbs' ? true : !!(t[0] || t[1]), lo: l.confidence < 70 });
+      }
+      if (rows.length > best.length) best = rows;
+      if (best.length >= 3) break;   // genug erkannt
+    }
+    st.hidden = true; scanRows = best;
     if (!scanRows.length) { toast('Nichts erkannt – bitte nochmal oder von Hand tippen'); scanRows = [blankRow()]; }
     renderReview(); sfx('ok'); $('#review').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (err) {
@@ -609,12 +649,12 @@ $('#gal').onchange = e => { scanFile(e.target.files[0]); e.target.value = ''; };
 const blankRow = () => ({ t: scanMode === 'verbs' ? ['', '', '', ''] : ['', ''], on: true });
 function renderReview() {
   const v = scanMode === 'verbs';
-  $('#review').hidden = false; $('#rv-swap').hidden = v; $('#rv-save').textContent = '💾 ' + scanRows.length + ' Karten speichern';
+  $('#review').hidden = false; $('#lo-hint').hidden = !scanRows.some(r => r.lo); $('#rv-swap').hidden = v; $('#rv-save').textContent = '💾 ' + scanRows.length + ' Karten speichern';
   $('#review-head').className = 'rows head' + (v ? ' v4' : ''); $('#review-head').innerHTML = '<span></span>' + (v ? '<span>Infinitiv</span><span>Past</span><span>Participle</span><span>Deutsch</span>' : '<span>🇬🇧 Englisch</span><span>🇩🇪 Deutsch</span>') + '<span></span>';
-  $('#review-rows').innerHTML = scanRows.map((r, i) => `<div class="rows${v ? ' v4' : ''}" data-i="${i}">
+  $('#review-rows').innerHTML = scanRows.map((r, i) => `<div class="rows${v ? ' v4' : ''}${r.lo ? ' lo' : ''}" data-i="${i}" ${r.lo ? 'title="Unsicher erkannt – bitte genau prüfen"' : ''}>
     <input type="checkbox" ${r.on ? 'checked' : ''}>${r.t.map((x, c) => `<input type="text" value="${esc(x)}" autocapitalize="off" autocomplete="off">`).join('')}<button aria-label="Zeile löschen" data-del>✖</button></div>`).join('');
 }
-function syncRows() { $$('#review-rows .rows').forEach(el => { const i = +el.dataset.i; scanRows[i] = { t: $$('input[type=text]', el).map(x => x.value), on: $('input[type=checkbox]', el).checked }; }); }
+function syncRows() { $$('#review-rows .rows').forEach(el => { const i = +el.dataset.i; scanRows[i] = { t: $$('input[type=text]', el).map(x => x.value), on: $('input[type=checkbox]', el).checked, lo: scanRows[i] && scanRows[i].lo }; }); }
 $('#review-rows').onclick = e => { if (e.target.closest('[data-del]')) { syncRows(); scanRows.splice(+e.target.closest('.rows').dataset.i, 1); renderReview(); } };
 $('#rv-add').onclick = () => { syncRows(); scanRows.push(blankRow()); renderReview(); };
 $('#rv-swap').onclick = () => { syncRows(); scanRows = scanRows.map(r => ({ ...r, t: [r.t[1], r.t[0]] })); renderReview(); };
@@ -718,35 +758,39 @@ function startGame(cards) {
   show('game'); maybeSing(); toast(say('start', `Los geht’s, ${myName() || 'du'}! Du schaffst das 💪`, {}, .6)); nextQ();
 }
 const stage = $('#stage'), tilt = $('#tilt'), flip = $('#flip'), fl = $('#float');
+const exIdx = c => (c.ex && c.exw) ? c.ex.toLowerCase().indexOf(c.exw.toLowerCase()) : -1;
+function clozeText(c) { const i = exIdx(c); if (i < 0) return c.en; return c.ex.slice(0, i) + '_____' + c.ex.slice(i + c.exw.length) + (c.forms ? ` (${c.en.replace(/^to /i, '')})` : ''); }
+function hlSentence(c) { const i = exIdx(c); if (i < 0) return esc(c.ex || c.en); return esc(c.ex.slice(0, i)) + '<mark>' + esc(c.ex.slice(i, i + c.exw.length)) + '</mark>' + esc(c.ex.slice(i + c.exw.length)); }
 async function nextQ() {
   if (G.i >= G.queue.length) return endGame();
   const q = G.q = G.queue[G.i]; q.hints = 0; q.box0 = q.c.box; q.retry = false; q.typeIt = false; q.listen = G.level === 'schwer' && q.dir === 'en-de' && Math.random() < .35 && !!window.speechSynthesis;
+  if (q.dir !== 'forms' && !q.listen && exIdx(q.c) >= 0 && Math.random() < .3) q.dir = 'cloze';   // manchmal: Wort im Satz (Lückentext)
   G.busy = true; stopTimer(); $('#answer-area').innerHTML = ''; $('#timer').hidden = true;
   const r = rarity(q.c), from = q.dir === 'de-en' ? 'de' : 'en', to = q.dir === 'en-de' ? 'de' : 'en', forms = q.dir === 'forms';
   const text = { en: q.c.en, de: q.c.de };
   fl.className = 'float'; flip.classList.remove('on'); [$('#front'), $('#back')].forEach(f => f.className = 'face ' + (f.id === 'front' ? 'front' : 'back'));
   stage.className = 'stage r' + r;
-  $('#front').innerHTML = faceHTML(q, r, from, text[from], true);
+  $('#front').innerHTML = faceHTML(q, r, from, q.dir === 'cloze' ? clozeText(q.c) : text[from], true);
   $('#back').innerHTML = `<div class="sparkles"></div><div class="ct"><span class="tag">${to === 'en' ? '🇬🇧 ENGLISCH' : '🇩🇪 DEUTSCH'}</span><span class="lvl">${'★'.repeat(q.c.box) || '☆'}</span></div>
-    <div class="art"><div class="flag">${animeSVG(q.c.en)}</div><div class="verdict" id="verdict"></div><div class="word" id="ans-word">${esc(forms ? q.c.en + ' · ' + q.c.forms.join(' · ') : text[to])}</div><div class="sub" id="ans-sub"></div>
-    <div class="spks"><button class="spk" data-say="${forms ? 'forms' : to}">🔊</button>${to === 'en' ? `<button class="spk slow" data-say="${forms ? 'forms-slow' : 'en-slow'}">🐢</button>` : ''}</div></div>
+    <div class="art"><div class="flag">${animeSVG(q.c.en)}</div><div class="verdict" id="verdict"></div><div class="word ${q.dir === 'cloze' ? 'sm' : ''}" id="ans-word">${q.dir === 'cloze' ? hlSentence(q.c) : esc(forms ? q.c.en + ' · ' + q.c.forms.join(' · ') : text[to])}</div><div class="sub" id="ans-sub"></div>
+    <div class="spks"><button class="spk" data-say="${q.dir === 'cloze' ? 'sentence' : forms ? 'forms' : to}">🔊</button>${to === 'en' ? `<button class="spk slow" data-say="${q.dir === 'cloze' ? 'sentence-slow' : forms ? 'forms-slow' : 'en-slow'}">🐢</button>` : ''}</div></div>
     <div class="pwr">MERK-POWER<div class="pb"><i style="width:${q.c.box * 25}%"></i></div></div>`;
   void fl.offsetWidth; fl.classList.add('deal'); sfx('flip');
   $('#prog').style.width = (G.i / G.queue.length * 100) + '%';
   await wait(750); fl.classList.remove('deal');
-  if (q.listen || db.set.autospeak) { if (q.dir === 'de-en') speak(q.c.de, 'de'); else speak(q.c.en, 'en'); }
-  buildAnswer(q, to, forms ? q.c.forms : text[to]); G.busy = false;
+  if (q.dir !== 'cloze' && (q.listen || db.set.autospeak)) { if (q.dir === 'de-en') speak(q.c.de, 'de'); else speak(q.c.en, 'en'); }
+  buildAnswer(q, to, forms ? q.c.forms : q.dir === 'cloze' ? q.c.exw : text[to]); G.busy = false;
   if (LV[G.level].time && !db.set.calm) startTimer(LV[G.level].time);
 }
 function faceHTML(q, r, from, word, front) {
   return `<div class="sparkles"></div><div class="ct"><span class="tag">${from === 'en' ? '🇬🇧 ENGLISCH' : '🇩🇪 DEUTSCH'}</span><span class="lvl">${RN[r]}</span></div>
   <div class="art"><div class="flag">${q.listen ? '👂' : animeSVG(q.c.en)}</div>
   <div class="word ${word.length > 14 ? 'sm' : ''} ${q.listen ? 'listen' : ''}">${esc(word)}</div>
-  ${q.listen ? '<div class="sub">Hör genau hin!</div>' : ''}${q.dir === 'forms' ? `<div class="sub">${esc(q.c.de)}<br><b>Past &amp; Participle?</b></div>` : ''}
-  <div class="spks"><button class="spk" data-say="${from}">🔊 Anhören</button>${from === 'en' ? '<button class="spk slow" data-say="en-slow">🐢</button>' : ''}</div></div>
+  ${q.listen ? '<div class="sub">Hör genau hin!</div>' : ''}${q.dir === 'cloze' ? `<div class="sub">${esc(q.c.exde || '')}<br><b>Welches Wort fehlt?</b></div>` : ''}${q.dir === 'forms' ? `<div class="sub">${esc(q.c.de)}<br><b>Past &amp; Participle?</b></div>` : ''}
+  ${q.dir === 'cloze' ? '' : `<div class="spks"><button class="spk" data-say="${from}">🔊 Anhören</button>${from === 'en' ? '<button class="spk slow" data-say="en-slow">🐢</button>' : ''}</div>`}</div>
   <div class="pwr">MERK-POWER<div class="pb"><i style="width:${q.c.box * 25}%"></i></div></div>`;
 }
-stage.addEventListener('click', e => { const b = e.target.closest('[data-say]'); if (!b || !G || !G.q) return; e.stopPropagation(); const k = b.dataset.say; if (k.startsWith('forms')) { speak(`${G.q.c.en}, ${G.q.c.forms.join(', ')}`, 'en', k === 'forms-slow'); return; } speak(k === 'en-slow' ? G.q.c.en : k === 'en' ? G.q.c.en : G.q.c.de, k.startsWith('en') ? 'en' : 'de', k === 'en-slow'); });
+stage.addEventListener('click', e => { const b = e.target.closest('[data-say]'); if (!b || !G || !G.q) return; e.stopPropagation(); const k = b.dataset.say; if (k.startsWith('sentence')) { speak(G.q.c.ex, 'en', k === 'sentence-slow'); return; } if (k.startsWith('forms')) { speak(`${G.q.c.en}, ${G.q.c.forms.join(', ')}`, 'en', k === 'forms-slow'); return; } speak(k === 'en-slow' ? G.q.c.en : k === 'en' ? G.q.c.en : G.q.c.de, k.startsWith('en') ? 'en' : 'de', k === 'en-slow'); });
 
 function buildAnswer(q, to, answer) {
   const area = $('#answer-area'), lvl = q.typeIt ? 'mittel' : G.level;
@@ -762,7 +806,7 @@ function buildAnswer(q, to, answer) {
   }
   if (lvl === 'leicht') {
     const key = to === 'en' ? 'en' : 'de';
-    const pool = [...new Set([...db.cards.map(c => c[key]), ...STARTER.map(s => s[to === 'en' ? 0 : 1])])].filter(x => strip(x) !== strip(answer));
+    const pool = q.dir === 'cloze' ? [...new Set(db.cards.map(c => c.exw).concat(Object.values(window.EXAMPLES || {}).map(e => e[2])))].filter(x => x && strip(x) !== strip(answer)) : [...new Set([...db.cards.map(c => c[key]), ...STARTER.map(s => s[to === 'en' ? 0 : 1])])].filter(x => strip(x) !== strip(answer));
     const opts = shuffle([answer, ...shuffle(pool).slice(0, 5)]);
     area.innerHTML = `<div class="choices">${opts.map(o => `<button class="choice">${esc(o)}</button>`).join('')}</div>`;
     $$('.choice', area).forEach(b => b.onclick = () => {
@@ -777,7 +821,7 @@ function buildAnswer(q, to, answer) {
       <div class="row center">${mid ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}<button class="btn" id="skip">🤷 Weiß ich nicht</button></div>`;
     $('#skip').onclick = () => resolve('bad', '');
     const inp = $('#inp'); if (mid) { drawPattern(answer, 1); $('#tip').onclick = () => { q.hints++; drawPattern(answer, 1 + q.hints); sfx('tap'); inp.focus(); }; }
-    const submit = () => { if (G.busy) return; if (!inp.value.trim()) { toast('Schreib etwas auf – oder tippe „Weiß ich nicht“'); inp.focus(); return; } let r = judge(inp.value, answer, !mid);
+    const submit = () => { if (G.busy) return; if (!inp.value.trim()) { toast('Schreib etwas auf – oder tippe „Weiß ich nicht“'); inp.focus(); return; } let r = judge(inp.value, q.dir === 'cloze' && q.c.forms ? q.c.exw + '/' + q.c.forms[0] : answer, !mid);
       if (r === 'bad' && mid && !q.retry) { q.retry = true; q.hints++; drawPattern(answer, 2 + q.hints); inp.value = ''; inp.focus(); toast('Fast! Noch ein Versuch – ich zeige dir mehr Buchstaben 💡'); sfx('tap'); return; }
       if (q.retry && r === 'ok') r = 'close';
       resolve(r, inp.value); };
@@ -801,7 +845,7 @@ async function resolve(res, input = '', timeout = false) {
   let gain = 0;
   if (ok) { G.combo++; G.best = Math.max(G.best, G.combo); G.right++; gain = Math.round((LV[G.level].pts - q.hints * 6 + quick * 15) * (res === 'close' ? .6 : 1) * (1 + Math.min(G.combo - 1, 5) * .2)); gain = Math.max(3, gain); G.score += gain; db.xp += gain; c.ok++; c.box = Math.min(4, c.box + (res === 'close' ? 0 : 1)); }
   else { G.combo = 0; G.wrong.push(c); c.bad++; c.box = Math.max(0, c.box - 1); }
-  const t = todayKey(); if (!db.today || db.today.d !== t) db.today = { d: t, n: 0 }; db.today.n++; if (ok && c.box > (q.box0 || 0)) G.up = (G.up || 0) + 1;
+  const t = todayKey(); if (!db.today || db.today.d !== t) db.today = { d: t, n: 0 }; db.today.n++; db.hist = db.hist || {}; db.hist[t] = (db.hist[t] || 0) + 1; { const ks = Object.keys(db.hist).sort(); while (ks.length > 40) delete db.hist[ks.shift()]; } if (ok && c.box > (q.box0 || 0)) G.up = (G.up || 0) + 1;
   G.wrongRun = ok ? 0 : (G.wrongRun || 0) + 1;
   save(); refresh(); $('#score').textContent = G.score; $('#combo').textContent = G.combo;
   const back = $('#back'); back.classList.add(ok ? 'good' : 'bad');
@@ -813,6 +857,7 @@ async function resolve(res, input = '', timeout = false) {
   // Aussprache: Englisches Wort nach der Antwort vorlesen (bei DE→EN)
   if (q.dir === 'de-en' && db.set.autospeak) setTimeout(() => speak(c.en, 'en'), 300);
   if (q.dir === 'en-de' && db.set.autospeak) setTimeout(() => speak(c.de, 'de'), 300);
+  if (q.dir === 'cloze' && db.set.autospeak) setTimeout(() => speak(c.ex, 'en'), 300);
   if (q.dir === 'forms' && db.set.autospeak) setTimeout(() => speak(`${c.en}, ${c.forms.join(', ')}`, 'en'), 300);
   $('#answer-area').innerHTML = `<button class="btn primary next" id="next">${G.i + 1 >= G.queue.length ? '🏁 Fertig' : 'Weiter ▶'}</button>`;
   $('#next').onclick = async () => { $('#next').disabled = true; fl.className = 'float out'; sfx('flip'); await wait(420); G.i++;
@@ -947,6 +992,67 @@ function singEncourage() {
   next();
 }
 function maybeSing() {
+  if (db.set.calm) return;   // Ruhig-Modus: keine Überraschungen
   if (db.set.slang === false || lastSang) { lastSang = false; return; }   // nie zweimal hintereinander, abschaltbar mit „Jugendsprache“
   if (Math.random() < .25) { lastSang = true; setTimeout(singEncourage, 500); }
 }
+
+
+/* ---------- Schnell-Eingabe: viele Wörter auf einmal (statt Foto) ---------- */
+$('#quick-open').onclick = () => { $('#quick').hidden = !$('#quick').hidden; if (!$('#quick').hidden) $('#quick-txt').focus(); };
+$('#quick-go').onclick = () => {
+  const txt = $('#quick-txt').value; scanMode = 'words';
+  scanRows = parseOCR(txt).map(t => ({ t, on: !!(t[0] || t[1]) }));
+  if (!scanRows.length) { toast('Bitte eine Zeile pro Wort schreiben, z. B. „apple – Apfel“'); return; }
+  $('#quick').hidden = true; renderReview(); $('#review').scrollIntoView({ behavior: 'smooth' });
+};
+
+/* ---------- Listen teilen: Export und Import als CSV (Excel/Numbers/Google Tabellen) ---------- */
+function parseTable(text) {
+  const lines = text.replace(/^﻿/, '').split(/\r?\n/).map(l => l.trim()).filter(Boolean), out = [];
+  for (const [i, l] of lines.entries()) {
+    const sep = l.includes(';') ? ';' : l.includes('\t') ? '\t' : l.includes(' - ') ? ' - ' : ',';
+    const c = l.split(sep).map(x => x.trim().replace(/^"|"$/g, ''));
+    if (i === 0 && /^(englisch|english)$/i.test(c[0])) continue;
+    if (c[0] && c[1]) out.push([c[0], c[1], c[3], c[4], c[2]]);   // en, de, Beispielsatz, Übersetzung, Lektion
+  }
+  return out;
+}
+$('#lib-import').onchange = async e => {
+  try { const rows = parseTable(await e.target.files[0].text()); const n = addCards(rows); renderLib(); toast(n ? `📥 ${n} Karten importiert` : 'Keine neuen Karten gefunden'); sfx(n ? 'win' : 'tap'); }
+  catch (_) { toast('Die Datei konnte nicht gelesen werden'); }
+  e.target.value = '';
+};
+$('#lib-export').onclick = () => {
+  const cl = x => String(x || '').replace(/[;\r\n]+/g, ' ').trim();
+  const list = db.set.unit ? db.cards.filter(c => c.unit === db.set.unit) : db.cards;
+  const csv = '﻿Englisch;Deutsch;Lektion;Beispielsatz;Übersetzung\n' + list.map(c => [cl(c.forms ? c.en + ' (' + c.forms.join(', ') + ')' : c.en), cl(c.de), cl(c.unit), cl(c.ex), cl(c.exde)].join(';')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'vokabeln-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+  toast(`📤 ${list.length} Karten gespeichert`);
+};
+
+/* ---------- Mein Fortschritt (zum Zeigen für Eltern und Lehrkräfte) ---------- */
+function progressData() {
+  const cards = db.cards, st = { neu: 0, ueben: 0, fast: 0, meister: 0 };
+  for (const c of cards) { if (c.ok + c.bad === 0) st.neu++; else if (c.box >= 4) st.meister++; else if (c.box === 3) st.fast++; else st.ueben++; }
+  const days = [], hist = db.hist || {};
+  for (let i = 6; i >= 0; i--) { const d = new Date(Date.now() - i * 864e5), k = d.toISOString().slice(0, 10); days.push({ k, n: hist[k] || 0, lbl: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][d.getDay()] }); }
+  const byUnit = {}; for (const c of cards) { const u = c.unit || 'Ohne Lektion'; (byUnit[u] = byUnit[u] || { t: 0, m: 0 }).t++; if (c.box >= 3) byUnit[u].m++; }
+  return { st, days, byUnit, total: cards.length };
+}
+function renderProgress() {
+  const { st, days, byUnit, total } = progressData(), m = meP(), mx = Math.max(1, ...days.map(d => d.n));
+  const bar = (n, cls) => `<div class="pg-row"><span>${n[0]}</span><div class="pg-bar"><i class="${cls}" style="width:${total ? n[1] / total * 100 : 0}%"></i></div><b>${n[1]}</b></div>`;
+  $('#progress-body').innerHTML = `<div class="panel"><h3>${esc(m.name || '')} · Klasse ${esc(m.cls || '7')}${m.book && m.book[0] !== 'I' ? ' · ' + esc(m.book) : ''}</h3>
+    <p class="big-num">${total} <small>Wörter insgesamt</small></p>
+    ${bar(['🌱 Neu', st.neu], 'c0')}${bar(['🔧 Üben', st.ueben], 'c1')}${bar(['⭐ Fast sicher', st.fast], 'c2')}${bar(['🏆 Gemeistert', st.meister], 'c3')}</div>
+    <div class="panel"><h3>Letzte 7 Tage (beantwortete Karten)</h3><div class="week">${days.map(d => `<div><i style="height:${Math.max(4, d.n / mx * 90)}px"></i><b>${d.n}</b><span>${d.lbl}</span></div>`).join('')}</div>
+    <p class="hint">🔥 Serie: ${db.streak} Tag(e) · ⭐ Punkte: ${db.xp}</p></div>
+    ${Object.keys(byUnit).length > 1 || (Object.keys(byUnit)[0] && Object.keys(byUnit)[0] !== 'Ohne Lektion') ? `<div class="panel"><h3>Nach Lektion</h3>${Object.entries(byUnit).map(([u, v]) => `<div class="pg-row"><span>${esc(u)}</span><div class="pg-bar"><i class="c2" style="width:${v.t ? v.m / v.t * 100 : 0}%"></i></div><b>${v.m}/${v.t}</b></div>`).join('')}</div>` : ''}`;
+}
+$('#prog-share').onclick = async () => {
+  const { st, days, total } = progressData(), m = meP();
+  const t = `Vokabel-Arena – ${m.name || ''}, Klasse ${m.cls || '7'}${m.book && m.book[0] !== 'I' ? ', ' + m.book : ''}\n${total} Wörter: ${st.meister} gemeistert, ${st.fast} fast sicher, ${st.ueben} in Übung, ${st.neu} neu.\nLetzte 7 Tage: ${days.map(d => d.lbl + ' ' + d.n).join(', ')}.\nSerie: ${db.streak} Tag(e).`;
+  try { if (navigator.share) { await navigator.share({ text: t }); return; } await navigator.clipboard.writeText(t); toast('📋 Kopiert – jetzt einfügen und senden'); } catch (e) { toast('Teilen hat nicht geklappt'); }
+};
+$('#progress-open').onclick = () => { sfx('tap'); show('progress'); };
