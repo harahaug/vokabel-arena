@@ -329,3 +329,6 @@ body.calm .finger{animation:none}
 .demo{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.demo .spk{font-size:20px;padding:14px 22px}
 .rare{display:flex;gap:10px}.rare span{padding:18px 14px;border-radius:14px;font-weight:900;color:#1b1147;border:3px solid #fff5;background:linear-gradient(145deg,var(--c1),var(--c2))}
 .tour-dots{display:flex;gap:8px;justify-content:center;margin:10px 0}.tour-dots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}.tour-dots i.on{background:var(--pri);transform:scale(1.3)}
+
+/* Platz unten, damit Overlays (z. B. der Netlify-Knopf) die Links nicht verdecken */
+.foot{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
