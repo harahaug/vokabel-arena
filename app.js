@@ -140,7 +140,9 @@ function fillUnits() { $('#units').innerHTML = units().map(u => `<option value="
 
 /* ---------- Navigation ---------- */
 const views = $$('.view');
+let curView = 'home';
 function show(name) {
+  curView = name; $('#back').hidden = name === 'home' || name === 'game' || (name === 'profiles' && !curId);
   views.forEach(v => v.hidden = v.id !== 'v-' + name);
   window.scrollTo(0, 0);
   if (name === 'library') renderLib();
@@ -380,7 +382,7 @@ function renderProfiles() {
 }
 $('#prof-grid').onclick = e => {
   const ed = e.target.closest('[data-edit]');
-  if (ed) { e.stopPropagation(); const p = profiles.find(x => x.id === ed.dataset.edit); editingP = p; pickTheme = p.theme || 'anime'; pickSeed = p.seed || uid(); pickOpts = { ...AVDEF, ...(p.opts || {}) }; $('#prof-name').value = p.name; $('#prof-add').textContent = 'Speichern'; $('#prof-title').textContent = '✏️ Avatar ändern'; renderPicker(); $('#prof-title').scrollIntoView({ behavior: 'smooth' }); return; }
+  if (ed) { e.stopPropagation(); startEdit(profiles.find(x => x.id === ed.dataset.edit)); return; }
   const d = e.target.closest('[data-del]');
   if (d) { e.stopPropagation(); const p = profiles.find(x => x.id === d.dataset.del); if (p && confirm(`Spieler „${p.name}“ mit allen Karten löschen?`)) { profiles = profiles.filter(x => x !== p); ls.set(PK, JSON.stringify(profiles)); ls.del(OLD + '.' + p.id); if (curId === p.id) { curId = ''; db = defaults(); } renderProfiles(); refresh(); } return; }
   const m = e.target.closest('.mc'); if (m) { sfx('win'); login(m.dataset.id); }
@@ -391,6 +393,11 @@ function addProfile() {
   if (editingP) { Object.assign(editingP, { name, theme: pickTheme, seed: pickSeed, opts: pickOpts }); const id = editingP.id; editingP = null; ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; $('#prof-add').textContent = 'Los'; $('#prof-title').textContent = '➕ Neuer Spieler'; confetti(40); login(id); return; }
   const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed, opts: pickOpts }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
+function startEdit(p) {
+  if (!p) return; editingP = p; pickTheme = p.theme || 'anime'; pickSeed = p.seed || uid(); pickOpts = { ...AVDEF, ...(p.opts || {}) };
+  $('#prof-name').value = p.name; $('#prof-add').textContent = 'Speichern'; $('#prof-title').textContent = '✏️ Meine Figur ändern'; renderPicker();
+}
+function stopEdit() { editingP = null; $('#prof-name').value = ''; $('#prof-add').textContent = 'Los'; $('#prof-title').textContent = '➕ Neuer Spieler'; renderPicker(); }
 let edOpen = false, pickTheme = 'custom', pickSeed = uid(), pickOpts = { ...AVDEF }, editingP = null;
 const THEMES = [['custom', '✏️', 'Selbst bauen'], ['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎤', 'Rap'], ['phonk', '🔥', 'Phonk']];
 function renderPicker() {
@@ -409,6 +416,8 @@ $('#th-next').onclick = () => { sfx('tap'); scrollThemes(1); };
 $('#prof-dice').onclick = () => { pickSeed = uid(); pickOpts = avRandom(); sfx('flip'); renderPicker(); };
 renderPicker();
 $('#prof-add').onclick = addProfile; $('#prof-name').onkeydown = e => { if (e.key === 'Enter') addProfile(); };
+$('#back').onclick = () => { sfx('tap'); if (curView === 'profiles') stopEdit(); show(curId ? 'home' : 'profiles'); };
+$('#edit-me').onclick = () => { sfx('tap'); show('profiles'); startEdit(profiles.find(p => p.id === curId)); $('#prof-title').scrollIntoView({ behavior: 'smooth' }); };
 $('#who').onclick = () => { sfx('tap'); show('profiles'); };
 
 /* ---------- Meine Karten ---------- */

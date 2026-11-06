@@ -268,3 +268,8 @@ body.calm .gbar .chip:nth-of-type(2){display:none}
 body.calm #combo-chip,body.calm #score-chip{display:none}
 .toast{border-radius:16px;max-width:88vw;text-align:center;padding:10px 16px;line-height:1.3}
 .spk{white-space:nowrap}
+
+.back{font-weight:800;color:var(--pri)}.me{cursor:pointer;margin-top:10px;font-weight:700}
+.hero{padding:0 0 10px}.hero h1{font-size:28px}.mini-deck{height:78px}.mini-deck i{width:52px;height:74px;margin-left:-26px}
+body.calm .mini-deck i{transform:rotate(var(--a)) translateY(0)}
+.mini-deck i:nth-child(1){margin-left:-52px}.mini-deck i:nth-child(3){margin-left:0}
