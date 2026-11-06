@@ -782,3 +782,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) naviga
   const fix = () => document.querySelectorAll('input:not([type]),input[type=text],input[type=search]').forEach(i => { for (const k in A) if (i.getAttribute(k) !== A[k]) i.setAttribute(k, A[k]); });
   fix(); new MutationObserver(fix).observe(document.body, { childList: true, subtree: true });
 })();
+
+/* Kein Zoom (iPhone ignoriert user-scalable=no teilweise): Pinch- und Doppeltipp-Zoom blockieren */
+['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });

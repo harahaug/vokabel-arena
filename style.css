@@ -273,3 +273,14 @@ body.calm #combo-chip,body.calm #score-chip{display:none}
 .hero{padding:0 0 10px}.hero h1{font-size:28px}.mini-deck{height:78px}.mini-deck i{width:52px;height:74px;margin-left:-26px}
 body.calm .mini-deck i{transform:rotate(var(--a)) translateY(0)}
 .mini-deck i:nth-child(1){margin-left:-52px}.mini-deck i:nth-child(3){margin-left:0}
+
+/* Lesbare Schrift, kein Zoom */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body,button,input,select{touch-action:manipulation}
+body{font-size:18px;line-height:1.45}
+.hint,.field,.check{font-size:16px}.chip{font-size:15px}.foot{font-size:15px}.sub{font-size:15px}
+.mc .t{font-size:12px}.mc .in b{font-size:18px}.mc .in span{font-size:14px}
+.seg button b{font-size:17px}.seg button small{font-size:13px}.seg.pick small{font-size:13px!important}
+.pwr{font-size:12px}.ct{font-size:14px}.rows.head{font-size:14px}.rows input[type=text]{font-size:16px}
+.choice{font-size:18px}.pattern{font-size:20px}.typebox input{font-size:20px}
+.lv small{font-size:16px}.big small{font-size:15px}.orow>span{font-size:15px}
