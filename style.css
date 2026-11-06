@@ -358,3 +358,12 @@ dialog{background:var(--dlg)}
 .stickybar{background:linear-gradient(transparent,var(--bg1) 45%)}
 .bgb{width:54px;height:54px;border-radius:16px;border:3px solid transparent;cursor:pointer;min-width:54px}
 .bgb.on{border-color:var(--pri);box-shadow:0 0 0 2px #0006,0 6px 14px rgba(0,0,0,.45);transform:translateY(-2px)}
+
+.sing{position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:70;max-width:88vw;text-align:center;background:linear-gradient(135deg,#7c5cff,#ff4fa3);color:#fff;padding:16px 22px;border-radius:22px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.sing b{font-size:26px;letter-spacing:2px}.sing span{font-size:16px;opacity:.95}
+.sing.go{animation:singIn .5s cubic-bezier(.2,1.4,.4,1) both,singOut .5s 4.2s ease-in forwards}
+@keyframes singIn{from{opacity:0;transform:translateX(-50%) translateY(-20px) scale(.8)}}
+@keyframes singOut{to{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+body.calm .sing.go{animation:singIn .3s ease both,singOut .4s 4.3s ease-in forwards}
+
+.seg.gender{grid-template-columns:repeat(3,1fr);margin:6px 0 10px}.seg.gender button b{font-size:26px}

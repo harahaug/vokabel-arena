@@ -36,6 +36,11 @@
     <div class="panel">
       <h3 id="prof-title">➕ Neuer Spieler</h3>
       <p class="hint">Wähle deinen Stil und würfle, bis dir deine Figur gefällt:</p>
+      <div class="seg gender" id="gender-seg">
+        <button type="button" data-g="0"><b>♀</b><small>weiblich</small></button>
+        <button type="button" data-g="1"><b>♂</b><small>männlich</small></button>
+        <button type="button" data-g="2"><b>⚧</b><small>nicht-binär</small></button>
+      </div>
       <div class="prev-row"><div id="prof-prev" class="prev"></div><button class="btn primary" id="prof-dice" type="button">🎲 Neue Figur</button></div>
       <div class="seg-wrap"><button class="arrow" id="th-prev" type="button" aria-label="Zurück">◀</button><div class="seg pick" id="theme-seg"></div><button class="arrow" id="th-next" type="button" aria-label="Weiter">▶</button></div>
       <button class="btn" id="ed-toggle" type="button">✏️ Figur genauer einstellen</button>
@@ -239,6 +244,7 @@
 
 <footer class="foot">Diese App wurde von <b>Harald Haug</b> erstellt 💜 · Vokabel-Arena · Stand 6.11. (Version 2)<br><a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a> · <a href="mailto:haug.harald82@googlemail.com?subject=Vokabel-Arena%20Hilfe">✉️ Hilfe / Frage</a></footer>
 
+<div id="sing" class="sing" hidden aria-live="polite"></div>
 <div id="tour" class="tour" hidden role="dialog" aria-label="Kurze Einführung">
   <div class="tour-card">
     <button class="tour-skip" id="tour-skip" type="button">Überspringen ✖</button>
