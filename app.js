@@ -254,7 +254,24 @@ function robotSVG(seed) {
   <ellipse cx="45" cy="59" rx="8" ry="10" fill="${led}"/><ellipse cx="75" cy="59" rx="8" ry="10" fill="${led}"/><circle cx="42" cy="55" r="3" fill="#fff"/><circle cx="72" cy="55" r="3" fill="#fff"/>
   ${smile ? `<path d="M46 86Q60 96 74 86" fill="none" stroke="${dk}" stroke-width="4" stroke-linecap="round"/>` : `<rect x="46" y="84" width="28" height="7" rx="3.5" fill="${dk}"/><path d="M53 84v7M60 84v7M67 84v7" stroke="${metal}" stroke-width="2"/>`}</svg>`;
 }
+function funkSVG(seed) {
+  const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length], dk = '#14102e';
+  const skin = pick(['#ffe0c8', '#f2c9a5', '#c98f62', '#8d5a3a', '#6b3f26'], 0), hair = pick(['#1a1a2e', '#3b2314', '#ff3d8b', '#8a5cff', '#ffb400', '#12d6a0'], 3), lens = pick(['#ff8a3d', '#ff2e90', '#00e5ff', '#ffd23f', '#a855f7'], 6), jacket = pick(['#ff2e90', '#6a2cff', '#ff8a3d', '#12b886'], 9), style = (h >>> 12) % 3, note = pick(['♪', '♫', '♬'], 15);
+  const hairBack = style === 0 ? `<circle cx="60" cy="44" r="46" fill="${hair}" stroke="${dk}" stroke-width="3"/>` : style === 1 ? `<path d="M18 60Q6 12 60 8Q114 12 102 60Q96 30 60 28Q24 30 18 60Z" fill="${hair}" stroke="${dk}" stroke-width="3"/><path d="M26 22q-10-4-12-14M94 22q10-4 12-14M60 8V-2" stroke="${hair}" stroke-width="5" stroke-linecap="round" opacity="0"/>` : `<path d="M20 52Q22 14 60 12Q98 14 100 52Q80 34 60 38Q40 34 20 52Z" fill="${lens}" stroke="${dk}" stroke-width="3"/><path d="M96 38l16 10-6 8" fill="${lens}" stroke="${dk}" stroke-width="3" stroke-linejoin="round"/>`;
+  return `<svg class="anime" viewBox="0 0 120 120" aria-hidden="true">
+  <text x="96" y="28" font-size="22" fill="#ffd23f" stroke="${dk}" stroke-width=".8" font-family="Arial">${note}</text>
+  <path d="M30 104Q60 124 90 104L98 120H22Z" fill="${jacket}" stroke="${dk}" stroke-width="3"/><path d="M50 106L60 120L70 106" fill="#fff" stroke="${dk}" stroke-width="2"/>
+  <path d="M46 108Q60 120 74 108" fill="none" stroke="#ffd23f" stroke-width="3.5"/><circle cx="60" cy="117" r="4" fill="#ffd23f" stroke="${dk}" stroke-width="1.5"/>
+  ${style === 0 ? hairBack : ''}
+  <ellipse cx="60" cy="68" rx="31" ry="34" fill="${skin}" stroke="${dk}" stroke-width="3"/>
+  ${style === 1 ? hairBack : style === 2 ? hairBack : `<path d="M30 56Q40 32 60 34Q80 32 90 56Q76 44 60 46Q44 44 30 56Z" fill="${hair}" stroke="${dk}" stroke-width="3"/>`}
+  <path d="M26 62Q60 22 94 62" fill="none" stroke="${dk}" stroke-width="7" stroke-linecap="round"/><rect x="14" y="56" width="15" height="28" rx="7" fill="${lens}" stroke="${dk}" stroke-width="3"/><rect x="91" y="56" width="15" height="28" rx="7" fill="${lens}" stroke="${dk}" stroke-width="3"/>
+  <circle cx="45" cy="68" r="12" fill="${lens}" stroke="${dk}" stroke-width="3.5"/><circle cx="75" cy="68" r="12" fill="${lens}" stroke="${dk}" stroke-width="3.5"/><path d="M57 66h6" stroke="${dk}" stroke-width="3.5"/>
+  <path d="M38 62l8-4M68 62l8-4" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+  <path d="M48 88Q60 98 72 88Q60 92 48 88Z" fill="#fff" stroke="${dk}" stroke-width="3" stroke-linejoin="round"/></svg>`;
+}
 function animeSVG(seed, theme = themeOf()) {
+  if (theme === 'funk') return funkSVG(seed);
   if (theme === 'vinyl') return vinylSVG(seed); if (theme === 'robot') return robotSVG(seed);
   if (theme === 'vampir') return vampireSVG(seed); if (theme === 'blocky') return blockySVG(seed);
   const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length];
@@ -304,7 +321,7 @@ function addProfile() {
   const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
 let pickTheme = 'anime', pickSeed = uid();
-const THEMES = [['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter']];
+const THEMES = [['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎧', 'Funk']];
 function renderPicker() {
   $('#theme-seg').innerHTML = THEMES.map(([k, i, n]) => `<button data-v="${k}" class="${k === pickTheme ? 'on' : ''}"><b>${i}</b><small style="display:block">${n}</small></button>`).join('');
   $('#prof-prev').innerHTML = animeSVG(pickSeed, pickTheme);
