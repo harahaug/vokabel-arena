@@ -380,3 +380,6 @@ mark{background:#ffd23f;color:#1b1147;border-radius:6px;padding:0 5px;font-weigh
 
 /* Netlify-Overlay (Drawer/Badge) ausblenden – erscheint nur für angemeldete Netlify-Mitglieder */
 netlify-drawer,#netlify-drawer,[id^="netlify-drawer"],[class*="netlify-drawer"],iframe[src*="netlify"],[data-netlify-drawer]{display:none!important}
+
+/* Platz am unteren Rand, damit Overlays des Hosters (z. B. „Powered by Netlify“) keine Antwort verdecken */
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
