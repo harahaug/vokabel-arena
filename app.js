@@ -157,6 +157,10 @@ function refresh() {
   const me = profiles.find(p => p.id === curId); $('#who').textContent = '👤 ' + (me ? me.name : '–');
   $('#xp').textContent = db.xp; $('#streak').textContent = db.streak;
   $('#calm-btn').hidden = true; $('#calm-btn').textContent = db.set.calm ? '🧘 Ruhig-Modus: AN' : '🎉 Action-Modus: AN';
+  const n = db.today && db.today.d === todayKey() ? db.today.n : 0, who = myName();
+  $('#goal-bar').style.width = Math.min(100, n / GOAL * 100) + '%';
+  $('#goal-text').textContent = n >= GOAL ? `🏆 Tagesziel geschafft${who ? ', ' + who : ''}! Mega!` : n === 0 ? `🎯 Los geht’s${who ? ', ' + who : ''}! Heute: ${GOAL} Wörter` : `🎯 Heute ${n} von ${GOAL} – du schaffst das!`;
+  { const m = meP(); $('#home-sub').textContent = m.name ? `Englisch · Klasse ${m.cls || '7'}${m.book && m.book[0] !== 'I' ? ' · ' + m.book : ''}` : 'Englisch'; }
   $('#home-empty').hidden = db.cards.length > 0;
   $('#home-count').textContent = db.cards.length ? `${db.cards.length} Karten bereit` : 'Erst Karten sammeln!';
 }
@@ -241,6 +245,11 @@ function speak(text, lang = 'en', slow = false, retried = false) {
 
 /* ---------- Anime-Figuren (pro Wort automatisch, als SVG) ---------- */
 function hash(str) { let h = 2166136261; for (const c of str.toLowerCase()) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+const BOOKS = ['Notting Hill Gate', 'Green Line', 'English G', 'Lighthouse', 'Access', 'Ich weiß es nicht / anderes Buch'];
+const meP = () => profiles.find(p => p.id === curId) || {};
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const GOAL = 12;
+const myName = () => (profiles.find(p => p.id === curId) || {}).name || '';
 const themeOf = () => (profiles.find(p => p.id === curId) || {}).theme || 'anime';
 function vampireSVG(seed) {
   const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length], dk = '#14102e';
@@ -397,7 +406,7 @@ function animeSVG(seed, theme = themeOf()) {
   <ellipse cx="36" cy="82" rx="5" ry="3" fill="#ff8fab" opacity=".55"/><ellipse cx="84" cy="82" rx="5" ry="3" fill="#ff8fab" opacity=".55"/>${mouth}</svg>`;
 }
 /* ---------- Spieler / Profile (pro Gerät) ---------- */
-function login(id) { curId = id; ls.set(CK, id); loadDB(); applyCalm(); fillUnits(); refresh(); show('home'); }
+function login(id) { curId = id; ls.set(CK, id); loadDB(); applyCalm(); fillUnits(); refresh(); show('home'); if (!db.set.toured) setTimeout(openTour, 500); }
 function renderProfiles() {
   $('#prof-grid').innerHTML = profiles.map((p, i) => `<div class="mc r${(hash(p.name) % 4) + 1}" data-id="${p.id}" style="animation-delay:${i * 60}ms">
     <div class="t"><span>SPIELER</span><span><button class="pdel" data-edit="${p.id}" aria-label="Avatar ändern">✏️</button><button class="pdel" data-del="${p.id}" aria-label="Löschen">✖</button></span></div>
@@ -413,14 +422,16 @@ $('#prof-grid').onclick = e => {
 function addProfile() {
   const name = norm0($('#prof-name').value); if (!name) { toast('Bitte einen Namen eingeben'); return; }
   if (profiles.some(p => p !== editingP && p.name.toLowerCase() === name.toLowerCase())) { toast('Den Namen gibt es schon'); return; }
-  if (editingP) { Object.assign(editingP, { name, theme: pickTheme, seed: pickSeed, opts: pickOpts }); const id = editingP.id; editingP = null; ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; $('#prof-add').textContent = 'Los'; $('#prof-title').textContent = '➕ Neuer Spieler'; confetti(40); login(id); return; }
-  const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed, opts: pickOpts }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
+  if (editingP) { Object.assign(editingP, { name, theme: pickTheme, seed: pickSeed, opts: pickOpts, cls: $('#prof-class').value, book: $('#prof-book').value }); const id = editingP.id; editingP = null; ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; $('#prof-add').textContent = 'Los'; $('#prof-title').textContent = '➕ Neuer Spieler'; confetti(40); login(id); return; }
+  const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed, opts: pickOpts, cls: $('#prof-class').value, book: $('#prof-book').value }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
 function startEdit(p) {
   if (!p) return; editingP = p; pickTheme = p.theme || 'anime'; pickSeed = p.seed || uid(); pickOpts = { ...AVDEF, ...(p.opts || {}) };
+  $('#prof-class').value = p.cls || '7'; $('#prof-book').value = p.book || BOOKS[0];
   $('#prof-name').value = p.name; $('#prof-add').textContent = 'Speichern'; $('#prof-title').textContent = '✏️ Meine Figur ändern'; renderPicker();
 }
 function stopEdit() { editingP = null; $('#prof-name').value = ''; $('#prof-add').textContent = 'Los'; $('#prof-title').textContent = '➕ Neuer Spieler'; renderPicker(); }
+$('#prof-book').innerHTML = BOOKS.map(b => `<option>${b}</option>`).join('');
 let edOpen = false, pickTheme = 'custom', pickSeed = uid(), pickOpts = { ...AVDEF }, editingP = null;
 const THEMES = [['custom', '✏️', 'Selbst bauen'], ['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎤', 'Rap'], ['phonk', '🔥', 'Phonk']];
 function renderPicker() {
@@ -649,7 +660,9 @@ function pickCards(pool) {
   const w = c => (5 - c.box) ** 2 + (c.bad > c.ok ? 6 : 0) + (c.ok + c.bad === 0 ? 8 : 0);
   const out = [], bag = [...pool], n = db.set.num === 'all' ? pool.length : Math.min(+db.set.num, pool.length);
   while (out.length < n && bag.length) { let t = bag.reduce((s, c) => s + w(c), 0) * Math.random(), i = 0; for (; i < bag.length - 1; i++) { t -= w(bag[i]); if (t <= 0) break; } out.push(...bag.splice(i, 1)); }
-  return out;
+  const sorted = [...out].sort((a, b) => b.box - a.box);                 // sichere Karten zuerst und zum Schluss
+  const first = sorted.splice(0, Math.min(2, sorted.length)), last = sorted.splice(0, 1);
+  return [...first, ...shuffle(sorted), ...last];
 }
 function pickDir(c) {
   const d = db.set.dir, f = !!c.forms && db.set.level !== 'leicht';   // Leicht: nie selbst schreiben
@@ -661,12 +674,12 @@ function startGame(cards) {
   const level = db.set.level;
   G = { level, queue: (cards || pickCards(pool())).map(c => ({ c, dir: pickDir(c) })), i: 0, score: 0, combo: 0, best: 0, wrong: [], right: 0, busy: false };
   $('#score').textContent = 0; $('#combo').textContent = 0; $('#prog').style.width = '0';
-  show('game'); nextQ();
+  show('game'); toast(`Los geht’s, ${myName() || 'du'}! Du schaffst das 💪`); nextQ();
 }
 const stage = $('#stage'), tilt = $('#tilt'), flip = $('#flip'), fl = $('#float');
 async function nextQ() {
   if (G.i >= G.queue.length) return endGame();
-  const q = G.q = G.queue[G.i]; q.hints = 0; q.typeIt = false; q.listen = G.level === 'schwer' && q.dir === 'en-de' && Math.random() < .35 && !!window.speechSynthesis;
+  const q = G.q = G.queue[G.i]; q.hints = 0; q.box0 = q.c.box; q.retry = false; q.typeIt = false; q.listen = G.level === 'schwer' && q.dir === 'en-de' && Math.random() < .35 && !!window.speechSynthesis;
   G.busy = true; stopTimer(); $('#answer-area').innerHTML = ''; $('#timer').hidden = true;
   const r = rarity(q.c), from = q.dir === 'de-en' ? 'de' : 'en', to = q.dir === 'en-de' ? 'de' : 'en', forms = q.dir === 'forms';
   const text = { en: q.c.en, de: q.c.de };
@@ -711,14 +724,22 @@ function buildAnswer(q, to, answer) {
     const pool = [...new Set([...db.cards.map(c => c[key]), ...STARTER.map(s => s[to === 'en' ? 0 : 1])])].filter(x => strip(x) !== strip(answer));
     const opts = shuffle([answer, ...shuffle(pool).slice(0, 5)]);
     area.innerHTML = `<div class="choices">${opts.map(o => `<button class="choice">${esc(o)}</button>`).join('')}</div>`;
-    $$('.choice', area).forEach(b => b.onclick = () => { if (G.busy) return; $$('.choice', area).forEach(x => x.disabled = true); const ok = b.textContent === answer; b.classList.add(ok ? 'ok' : 'no'); if (!ok) $$('.choice', area).find(x => x.textContent === answer).classList.add('ok'); resolve(ok ? 'ok' : 'bad'); });
+    $$('.choice', area).forEach(b => b.onclick = () => {
+      if (G.busy) return; const ok = b.textContent === answer;
+      if (!ok && !q.retry) { q.retry = true; b.classList.add('no'); b.disabled = true; sfx('tap'); toast('Fast! Probier es noch einmal 🔍'); return; }   // 1 zweite Chance
+      $$('.choice', area).forEach(x => x.disabled = true); b.classList.add(ok ? 'ok' : 'no'); if (!ok) $$('.choice', area).find(x => x.textContent === answer).classList.add('ok');
+      resolve(ok ? (q.retry ? 'close' : 'ok') : 'bad');
+    });
   } else {
     const mid = lvl === 'mittel';
     area.innerHTML = `${q.typeIt ? '<div class="typeit">✍️ Schreib es selbst auf!</div>' : ''}${mid ? '<div class="pattern" id="pat"></div>' : ''}<div class="typebox"><input id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${to === 'en' ? 'Auf Englisch …' : 'Auf Deutsch …'}"><button class="btn primary" id="go">OK</button></div>
       <div class="row center">${mid ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}<button class="btn" id="skip">🤷 Weiß ich nicht</button></div>`;
     $('#skip').onclick = () => resolve('bad', '');
     const inp = $('#inp'); if (mid) { drawPattern(answer, 1); $('#tip').onclick = () => { q.hints++; drawPattern(answer, 1 + q.hints); sfx('tap'); inp.focus(); }; }
-    const submit = () => { if (G.busy) return; if (!inp.value.trim()) { toast('Schreib etwas auf – oder tippe „Weiß ich nicht“'); inp.focus(); return; } resolve(judge(inp.value, answer, !mid), inp.value); };
+    const submit = () => { if (G.busy) return; if (!inp.value.trim()) { toast('Schreib etwas auf – oder tippe „Weiß ich nicht“'); inp.focus(); return; } let r = judge(inp.value, answer, !mid);
+      if (r === 'bad' && mid && !q.retry) { q.retry = true; q.hints++; drawPattern(answer, 2 + q.hints); inp.value = ''; inp.focus(); toast('Fast! Noch ein Versuch – ich zeige dir mehr Buchstaben 💡'); sfx('tap'); return; }
+      if (q.retry && r === 'ok') r = 'close';
+      resolve(r, inp.value); };
     $('#go').onclick = submit; inp.onkeydown = e => { if (e.key === 'Enter') submit(); };
     if (!matchMedia('(pointer:coarse)').matches) inp.focus();
   }
@@ -739,10 +760,12 @@ async function resolve(res, input = '', timeout = false) {
   let gain = 0;
   if (ok) { G.combo++; G.best = Math.max(G.best, G.combo); G.right++; gain = Math.round((LV[G.level].pts - q.hints * 6 + quick * 15) * (res === 'close' ? .6 : 1) * (1 + Math.min(G.combo - 1, 5) * .2)); gain = Math.max(3, gain); G.score += gain; db.xp += gain; c.ok++; c.box = Math.min(4, c.box + (res === 'close' ? 0 : 1)); }
   else { G.combo = 0; G.wrong.push(c); c.bad++; c.box = Math.max(0, c.box - 1); }
+  const t = todayKey(); if (!db.today || db.today.d !== t) db.today = { d: t, n: 0 }; db.today.n++; if (ok && c.box > (q.box0 || 0)) G.up = (G.up || 0) + 1;
+  G.wrongRun = ok ? 0 : (G.wrongRun || 0) + 1;
   save(); refresh(); $('#score').textContent = G.score; $('#combo').textContent = G.combo;
   const back = $('#back'); back.classList.add(ok ? 'good' : 'bad');
   try { navigator.vibrate && navigator.vibrate(ok ? 25 : [60, 40, 60]); } catch (e) { }
-  $('#verdict').textContent = res === 'ok' ? '✅ ' + ['Super!', 'Mega!', 'Stark!', 'Boom! 💥', 'Genial!', 'Weiter so!', 'Yeah! 🎉'][rnd(7)] : res === 'close' ? '👍 Fast – knapp daneben' : timeout ? '⏰ Zeit um!' : '❌ Leider falsch';
+  $('#verdict').textContent = res === 'ok' ? (G.combo >= 3 ? `🔥 ${G.combo} in Folge – wow!` : '✅ ' + ['Super!', 'Mega!', 'Stark!', 'Boom! 💥', 'Genial!', 'Weiter so!', 'Yeah! 🎉'][rnd(7)]) : res === 'close' ? '👍 Geschafft beim 2. Versuch!' : timeout ? '⏰ Zeit um – kein Problem!' : ['Noch nicht – aber jetzt kennst du es! 💪', 'Fehler helfen beim Lernen 🌟', 'Guter Versuch! Das merkst du dir 💜', 'Fast! Beim nächsten Mal klappt’s 🍀'][rnd(4)];
   $('#ans-sub').textContent = ok ? `+${gain} ⭐${G.combo > 1 ? ' · Combo x' + G.combo : ''}` : (input ? `Du: ${input}` : '');
   setTimeout(() => { flip.classList.add('on'); sfx(ok ? 'ok' : 'bad'); }, 250);
   await wait(700); fl.classList.add(ok ? 'win' : 'shake'); if (ok && G.combo >= 3) confetti(30);
@@ -751,25 +774,37 @@ async function resolve(res, input = '', timeout = false) {
   if (q.dir === 'en-de' && db.set.autospeak) setTimeout(() => speak(c.de, 'de'), 300);
   if (q.dir === 'forms' && db.set.autospeak) setTimeout(() => speak(`${c.en}, ${c.forms.join(', ')}`, 'en'), 300);
   $('#answer-area').innerHTML = `<button class="btn primary next" id="next">${G.i + 1 >= G.queue.length ? '🏁 Fertig' : 'Weiter ▶'}</button>`;
-  $('#next').onclick = async () => { $('#next').disabled = true; fl.className = 'float out'; sfx('flip'); await wait(420); G.i++; nextQ(); };
+  $('#next').onclick = async () => { $('#next').disabled = true; fl.className = 'float out'; sfx('flip'); await wait(420); G.i++;
+    if (G.wrongRun >= 2 && G.i < G.queue.length) {   // zu schwer? dann kommt eine sicherere Karte
+      let best = G.i; for (let k = G.i + 1; k < G.queue.length; k++) if (G.queue[k].c.box > G.queue[best].c.box) best = k;
+      if (best !== G.i) { const t = G.queue[G.i]; G.queue[G.i] = G.queue[best]; G.queue[best] = t; }
+      G.wrongRun = 0; toast('Kein Stress – als Nächstes etwas Leichteres 🌱');
+    }
+    nextQ(); };
   $('#next').focus();
 }
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && G && $('#v-game') && !$('#v-game').hidden) { const n = $('#next'); if (n && !n.disabled) n.click(); } });
 $('#quit').onclick = () => { if (confirm('Runde beenden?')) { speechSynthesis && speechSynthesis.cancel(); show('home'); } };
 
 function endGame() {
-  const total = G.queue.length, pct = G.right / total, stars = pct >= .9 ? 3 : pct >= .6 ? 2 : pct > 0 ? 1 : 0;
+  const total = G.queue.length, pct = G.right / total, stars = pct >= .9 ? 3 : pct >= .6 ? 2 : 1, me = myName() || 'du';   // mindestens 1 Stern – jede Runde zählt
   const today = new Date().toDateString();
   if (db.lastDay !== today) { const y = new Date(Date.now() - 864e5).toDateString(); db.streak = db.lastDay === y ? db.streak + 1 : 1; db.lastDay = today; }
+  const goalNow = db.today && db.today.n >= GOAL;
   save(); refresh(); show('result');
   $('#stars').innerHTML = [0, 1, 2].map(i => `<span style="animation-delay:${i * .25}s;opacity:${i < stars ? 1 : .2}">⭐</span>`).join('');
-  $('#res-title').textContent = pct === 1 ? 'PERFEKT! 🏆' : pct >= .6 ? 'Stark gespielt! 💪' : 'Weiter üben – du schaffst das! 🌱';
-  $('#res-sub').textContent = `${G.right} von ${total} richtig · +${G.score} ⭐ · beste Combo x${G.best}`;
-  $('#res-wrong').innerHTML = G.wrong.length ? '<h3>Nochmal anschauen:</h3>' + G.wrong.map(c => `<div class="wr"><b>${esc(c.en)}</b><span>${esc(c.de)}</span></div>`).join('') : '';
+  $('#res-title').textContent = pct === 1 ? `PERFEKT, ${me}! 🏆` : pct >= .9 ? `Fantastisch, ${me}! 🌟` : pct >= .6 ? `Stark gespielt, ${me}! 💪` : `Toll, dass du drangeblieben bist, ${me}! 🌱`;
+  $('#res-sub').textContent = (pct >= .6 ? '' : 'Aus Fehlern lernt das Gehirn am meisten. ') + `${G.right} von ${total} richtig` + (G.up ? ` · ${G.up} Wörter sitzen jetzt besser` : '') + (goalNow ? ' · 🎯 Tagesziel geschafft!' : '');
+  $('#res-wrong').innerHTML = G.wrong.length ? '<h3>Diese Wörter üben wir noch – du packst das:</h3>' + G.wrong.map(c => `<div class="wr"><b>${esc(c.en)}</b><span>${esc(c.de)}</span></div>`).join('') : '';
   $('#again-wrong').hidden = !G.wrong.length;
-  if (stars >= 2) { sfx('win'); confetti(120); }
+  const order = ['leicht', 'mittel', 'schwer'], li = order.indexOf(G.level), sh = $('#shift-level');
+  if (pct >= .9 && li < 2) { sh.hidden = false; sh.dataset.to = order[li + 1]; sh.textContent = li === 0 ? '🔥 Bereit für mehr? Probier „Mittel“!' : '💀 Mutig? Probier „Schwer“!'; }
+  else if (pct < .4 && li > 0) { sh.hidden = false; sh.dataset.to = order[li - 1]; sh.textContent = '🌱 Eine Stufe leichter üben – ganz ohne Druck'; }
+  else sh.hidden = true;
+  if (stars >= 2 || goalNow) { sfx('win'); confetti(120); }
   G.done = true;
 }
+$('#shift-level').onclick = e => { db.set.level = e.currentTarget.dataset.to; save(); startGame(); };
 $('#again').onclick = () => startGame();
 $('#again-wrong').onclick = () => startGame([...G.wrong]);
 
@@ -822,3 +857,25 @@ document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preven
 /* Fehler sichtbar machen (hilft bei der Fehlersuche auf dem Handy) */
 window.addEventListener('error', e => { try { toast('⚠️ ' + (e.message || 'Fehler')); } catch (x) { } });
 window.addEventListener('unhandledrejection', e => { try { toast('⚠️ ' + ((e.reason && e.reason.message) || 'Fehler')); } catch (x) { } });
+
+
+/* ---------- Kurze Einführung (wenig Text, zum Anfassen) ---------- */
+const TOUR = [
+  { e: '📷', t: 'Karten holen', p: 'Tippe auf „Foto machen“ – oder auf „Start-Karten“.', v: '<div class="mock m-snap">📷 Foto machen</div><div class="mock m-soft">🎁 Start-Karten</div><div class="finger">👆</div>' },
+  { e: '🎮', t: 'Spielen', p: 'Tippe auf „Spielen“. Dann auf „Leicht“.', v: '<div class="mock m-play">🎮 Spielen</div><div class="mock m-lv">🌱 Leicht</div><div class="finger">👆</div>' },
+  { e: '🔊', t: 'Anhören', p: 'Tippe und hör zu – Englisch und Deutsch!', v: '<div class="demo"><button class="spk" data-w="apple" data-l="en" type="button">🔊 apple</button><button class="spk" data-w="Apfel" data-l="de" type="button">🔊 Apfel</button></div>' },
+  { e: '🃏', t: 'Karten sammeln', p: 'Richtig? Deine Karte wird stärker und seltener!', v: '<div class="rare"><span class="r0">★</span><span class="r2">★★</span><span class="r4">★★★★</span></div>' }
+];
+let tourI = 0;
+function openTour() { tourI = 0; $('#tour').hidden = false; renderTour(); }
+function closeTour() { $('#tour').hidden = true; db.set.toured = true; save(); sfx('win'); }
+function renderTour() {
+  const s = TOUR[tourI];
+  $('#tour-body').innerHTML = `<div class="tour-emoji">${s.e}</div><h2>${s.t}</h2><p>${s.p}</p><div class="tour-vis">${s.v}</div>`;
+  $('#tour-dots').innerHTML = TOUR.map((_, i) => `<i class="${i === tourI ? 'on' : ''}"></i>`).join('');
+  $('#tour-next').textContent = tourI === TOUR.length - 1 ? '🚀 Los geht’s!' : 'Weiter ▶';
+}
+$('#tour-next').onclick = () => { sfx('tap'); if (tourI < TOUR.length - 1) { tourI++; renderTour(); } else closeTour(); };
+$('#tour-skip').onclick = closeTour;
+$('#tour-open').onclick = () => { sfx('tap'); openTour(); };
+$('#tour-body').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) speak(b.dataset.w, b.dataset.l); });

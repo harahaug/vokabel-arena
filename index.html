@@ -41,6 +41,10 @@
       <button class="btn" id="ed-toggle" type="button">✏️ Figur genauer einstellen</button>
       <div id="editor" class="editor" hidden></div>
       
+      <div class="row small two">
+        <label>Klasse <select id="prof-class"><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option></select></label>
+        <label>Englischbuch <select id="prof-book"></select></label>
+      </div>
       <div class="typebox"><input id="prof-name" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="btn primary" id="prof-add">Los</button></div>
       <p class="hint">Jeder Spieler hat seine eigenen Karten, Punkte und Einstellungen auf diesem Gerät.</p>
     </div>
@@ -51,15 +55,17 @@
     <div class="hero">
       <div class="mini-deck" aria-hidden="true"><i></i><i></i><i></i></div>
       <h1>Karten sammeln.<br>Englisch rocken.</h1>
-      <p>Englisch · Klasse 7</p>
+      <p id="home-sub">Englisch</p>
       <p class="by">✨ Erstellt von <b>Harald Haug</b></p>
       <button class="chip me" id="edit-me" type="button">✏️ Meine Figur ändern</button>
+      <button class="chip me" id="tour-open" type="button">❓ Wie geht das?</button>
     </div>
     <div class="panel center" id="home-empty" hidden>
       <p><b>Los geht’s!</b> Hol dir zuerst Karten 🃏</p>
       <div class="row center"><button class="btn primary" data-go="scan">📸 Heft fotografieren</button><button class="btn" id="home-starter">🎁 Start-Karten</button></div>
     </div>
     <button class="chip calm-btn" id="calm-btn" type="button"></button>
+    <div class="goal"><div class="goal-bar"><i id="goal-bar"></i></div><span id="goal-text"></span></div>
     <div class="menu">
       <button class="big primary" data-go="setup"><span>🎮</span><div><b>Spielen</b><small id="home-count">–</small></div></button>
       <button class="big" data-go="scan"><span>📸</span><div><b>Vokabeln scannen</b><small>Foto von deinem Heft</small></div></button>
@@ -185,6 +191,7 @@
       <div id="res-wrong"></div>
       <div class="row center">
         <button class="btn primary" id="again-wrong">🔁 Fehler üben</button>
+        <button class="btn primary" id="shift-level" hidden></button>
         <button class="btn primary" id="again">🎮 Nochmal</button>
         <button class="btn" data-go="home">🏠 Start</button>
       </div>
@@ -226,6 +233,15 @@
 </main>
 
 <footer class="foot">Diese App wurde von <b>Harald Haug</b> erstellt 💜 · Vokabel-Arena v1<br><a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a> · <a href="mailto:haug.harald82@googlemail.com?subject=Vokabel-Arena%20Hilfe">✉️ Hilfe / Frage</a></footer>
+
+<div id="tour" class="tour" hidden role="dialog" aria-label="Kurze Einführung">
+  <div class="tour-card">
+    <button class="tour-skip" id="tour-skip" type="button">Überspringen ✖</button>
+    <div id="tour-body"></div>
+    <div class="tour-dots" id="tour-dots"></div>
+    <button class="btn primary huge" id="tour-next" type="button">Weiter ▶</button>
+  </div>
+</div>
 
 <dialog id="dlg">
   <form method="dialog" id="dlg-form">
