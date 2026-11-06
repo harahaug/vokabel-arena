@@ -377,3 +377,6 @@ mark{background:#ffd23f;color:#1b1147;border-radius:6px;padding:0 5px;font-weigh
 .big-num{font-size:40px;font-weight:900;margin:4px 0 8px}.big-num small{font-size:15px;font-weight:400;color:var(--mut)}
 .week{display:flex;gap:6px;align-items:flex-end;height:130px}.week>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;font-size:13px}
 .week i{display:block;width:100%;max-width:34px;background:linear-gradient(180deg,#35e08a,#3de1ff);border-radius:8px 8px 3px 3px}.week span{color:var(--mut)}
+
+/* Netlify-Overlay (Drawer/Badge) ausblenden – erscheint nur für angemeldete Netlify-Mitglieder */
+netlify-drawer,#netlify-drawer,[id^="netlify-drawer"],[class*="netlify-drawer"],iframe[src*="netlify"],[data-netlify-drawer]{display:none!important}
