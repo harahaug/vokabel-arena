@@ -92,11 +92,15 @@ hold|held|held|(fest)halten
 hurt|hurt|hurt|wehtun, schmerzen; verletzen`.split('\n').map(l => l.split('|'));
 
 /* ---------- Speicher ---------- */
-const KEY = 'vokabelarena.v1';
+const PK = 'vokabelarena.profiles', CK = 'vokabelarena.current', OLD = 'vokabelarena.v1';
+const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } }, del: k => { try { localStorage.removeItem(k); } catch (e) { } } };
 const defaults = () => ({ cards: [], set: { dir: 'mix', level: 'mittel', num: '10', sound: true, autospeak: true, voice: '', rate: 0.85 }, xp: 0, streak: 0, lastDay: '' });
-let db = defaults();
-try { const raw = JSON.parse(localStorage.getItem(KEY)); if (raw) db = { ...defaults(), ...raw, set: { ...defaults().set, ...raw.set } }; } catch (e) { /* Speicher gesperrt → läuft ohne Speichern */ }
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { toast('⚠️ Speichern nicht möglich'); } };
+let profiles = []; try { profiles = JSON.parse(ls.get(PK)) || []; } catch (e) { }
+if (!profiles.length && ls.get(OLD)) { profiles = [{ id: 'p1', name: 'Ich' }]; ls.set('vokabelarena.v1.p1', ls.get(OLD)); ls.set(PK, JSON.stringify(profiles)); }   // alte Daten übernehmen
+let curId = '', db = defaults();
+const key = () => OLD + '.' + curId;
+function loadDB() { db = defaults(); try { const raw = JSON.parse(ls.get(key())); if (raw) db = { ...defaults(), ...raw, set: { ...defaults().set, ...raw.set } }; } catch (e) { } }
+const save = () => { if (curId) ls.set(key(), JSON.stringify(db)); };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const norm0 = s => s.trim().replace(/\s+/g, ' ');
 function addCards(pairs, unit = '') {
@@ -142,9 +146,11 @@ function show(name) {
   if (name === 'setup') renderSetup();
   if (name === 'settings') renderSettings();
   if (name !== 'game') stopTimer();
+  if (name === 'profiles') renderProfiles();
 }
-document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) { sfx('tap'); show(b.dataset.go); } });
+document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) { if (!curId) { toast('Erst einen Spieler wählen 👤'); return; } sfx('tap'); show(b.dataset.go); } });
 function refresh() {
+  const me = profiles.find(p => p.id === curId); $('#who').textContent = '👤 ' + (me ? me.name : '–');
   $('#xp').textContent = db.xp; $('#streak').textContent = db.streak;
   $('#home-count').textContent = db.cards.length ? `${db.cards.length} Karten bereit` : 'Erst Karten sammeln!';
 }
@@ -223,6 +229,26 @@ function animeSVG(seed) {
   ${fringe}${extra}${E(45, 1)}${E(75, -1)}
   <ellipse cx="36" cy="82" rx="5" ry="3" fill="#ff8fab" opacity=".55"/><ellipse cx="84" cy="82" rx="5" ry="3" fill="#ff8fab" opacity=".55"/>${mouth}</svg>`;
 }
+/* ---------- Spieler / Profile (pro Gerät) ---------- */
+function login(id) { curId = id; ls.set(CK, id); loadDB(); fillUnits(); refresh(); show('home'); }
+function renderProfiles() {
+  $('#prof-grid').innerHTML = profiles.map((p, i) => `<div class="mc r${(hash(p.name) % 4) + 1}" data-id="${p.id}" style="animation-delay:${i * 60}ms">
+    <div class="t"><span>SPIELER</span><button class="pdel" data-del="${p.id}" aria-label="Löschen">✖</button></div>
+    <div class="in">${animeSVG(p.name)}<b>${esc(p.name)}</b></div><div class="pw"><i style="width:100%"></i></div></div>`).join('');
+}
+$('#prof-grid').onclick = e => {
+  const d = e.target.closest('[data-del]');
+  if (d) { e.stopPropagation(); const p = profiles.find(x => x.id === d.dataset.del); if (p && confirm(`Spieler „${p.name}“ mit allen Karten löschen?`)) { profiles = profiles.filter(x => x !== p); ls.set(PK, JSON.stringify(profiles)); ls.del(OLD + '.' + p.id); if (curId === p.id) { curId = ''; db = defaults(); } renderProfiles(); refresh(); } return; }
+  const m = e.target.closest('.mc'); if (m) { sfx('win'); login(m.dataset.id); }
+};
+function addProfile() {
+  const name = norm0($('#prof-name').value); if (!name) { toast('Bitte einen Namen eingeben'); return; }
+  if (profiles.some(p => p.name.toLowerCase() === name.toLowerCase())) { toast('Den Namen gibt es schon'); return; }
+  const p = { id: 'p' + uid(), name }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
+}
+$('#prof-add').onclick = addProfile; $('#prof-name').onkeydown = e => { if (e.key === 'Enter') addProfile(); };
+$('#who').onclick = () => { sfx('tap'); show('profiles'); };
+
 /* ---------- Meine Karten ---------- */
 const rarity = c => c.box >= 4 ? 4 : c.box >= 3 ? 3 : c.box >= 2 ? 2 : c.box >= 1 ? 1 : 0;
 const RN = ['NEU', 'SELTEN', 'STARK', 'EPISCH', 'LEGENDÄR'];
@@ -565,5 +591,5 @@ function loop() {
 }
 
 /* ---------- Start ---------- */
-fillUnits(); refresh(); show('home');
+if (profiles.length === 1) login(profiles[0].id); else { refresh(); show('profiles'); }
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });

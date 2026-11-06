@@ -19,6 +19,7 @@
 <header class="top">
   <button class="logo" data-go="home" aria-label="Startseite">⚡ Vokabel<b>Arena</b></button>
   <div class="top-stats">
+    <button class="chip btn-icon" id="who" title="Spieler wechseln">👤 –</button>
     <span class="chip" title="Erfahrungspunkte">⭐ <b id="xp">0</b></span>
     <span class="chip" title="Tage-Serie">🔥 <b id="streak">0</b></span>
     <button class="chip btn-icon" data-go="settings" aria-label="Einstellungen">⚙️</button>
@@ -26,6 +27,17 @@
 </header>
 
 <main id="app">
+
+  <!-- PROFILE -->
+  <section class="view" id="v-profiles" hidden>
+    <h2>👋 Wer spielt heute?</h2>
+    <div class="grid" id="prof-grid"></div>
+    <div class="panel">
+      <h3>➕ Neuer Spieler</h3>
+      <div class="typebox"><input id="prof-name" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="btn primary" id="prof-add">Los</button></div>
+      <p class="hint">Jeder Spieler hat seine eigenen Karten, Punkte und Einstellungen auf diesem Gerät.</p>
+    </div>
+  </section>
 
   <!-- HOME -->
   <section class="view" id="v-home">
