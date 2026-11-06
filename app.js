@@ -145,7 +145,8 @@ function fillUnits() { $('#units').innerHTML = units().map(u => `<option value="
 const views = $$('.view');
 let curView = 'home';
 function show(name) {
-  curView = name; $('#nav-back').hidden = name === 'home' || name === 'game' || (name === 'profiles' && !curId);
+  curView = name; $('.foot').hidden = !['home', 'profiles', 'settings'].includes(name);   // Impressum/Datenschutz: Startseite, Spielerwahl und Einstellungen (von überall in 1–2 Tippen erreichbar)
+  $('#nav-back').hidden = name === 'home' || name === 'game' || (name === 'profiles' && !curId);
   views.forEach(v => v.hidden = v.id !== 'v-' + name);
   window.scrollTo(0, 0);
   if (name === 'library') renderLib();
