@@ -182,7 +182,7 @@ function pickVoice(lang) {
   const pre = lang.slice(0, 2);
   const list = voices.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(pre));
   if (pre === 'en' && db.set.voice) { const v = list.find(v => v.name === db.set.voice); if (v) return v; }
-  const score = v => (goodName.test(v.name) ? 4 : 0) + (v.lang.replace('_', '-').toLowerCase() === (pre === 'en' ? 'en-gb' : 'de-de') ? 2 : 0) + (v.lang.toLowerCase().startsWith('en-us') ? 1 : 0) + (v.localService ? 0 : 1);
+  const score = v => (goodName.test(v.name) ? 4 : 0) + (v.lang.replace('_', '-').toLowerCase() === (pre === 'en' ? 'en-gb' : 'de-de') ? 2 : 0) + (v.lang.toLowerCase().startsWith('en-us') ? 1 : 0) + (v.localService ? 2 : 0);
   return list.sort((a, b) => score(b) - score(a))[0];
 }
 function speak(text, lang = 'en', slow = false) {
