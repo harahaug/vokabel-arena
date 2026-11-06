@@ -187,13 +187,24 @@ function sfx(kind) {
 let voices = [];
 function loadVoices() { voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; if (!$('#v-settings').hidden) renderSettings(); }
 if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
-const goodName = /natural|premium|enhanced|neural|google|samantha|daniel|serena|karen|moira|siri/i;
+/* Beste Stimme des Geräts automatisch wählen: Qualität (Premium/Enhanced/Neural), passender Dialekt, lokal bevorzugt (Datenschutz, funktioniert offline) */
+const BAD_VOICE = /albert|bad news|bahh|bells|boing|bubbles|cellos|deranged|good news|hysterical|jester|organ|superstar|trinoids|whisper|wobble|zarvox|eddy|flo\b|grandma|grandpa|reed|rocko|sandy|shelley/i;   // Spaß- und Roboterstimmen von iPhone/Mac
+const TOP_VOICE = /premium|enhanced|neural|natural|siri|ava\b|serena|daniel|samantha|karen|moira|stephanie|libby|sonia|ryan|anna|petra|markus|yannick|helena|viktor|katja|conrad|amala/i;
+function voiceScore(v, pre) {
+  const lang = v.lang.replace('_', '-').toLowerCase();
+  if (BAD_VOICE.test(v.name)) return -50;
+  let sc = 0;
+  if (/premium|enhanced|neural|natural/i.test(v.name)) sc += 12; else if (TOP_VOICE.test(v.name)) sc += 6; else if (/google/i.test(v.name)) sc += 4;
+  if (pre === 'en') sc += lang === 'en-gb' ? 5 : lang === 'en-us' ? 4 : lang === 'en-au' || lang === 'en-ie' ? 2 : 0;
+  else sc += lang === 'de-de' ? 5 : lang === 'de-at' || lang === 'de-ch' ? 2 : 0;
+  if (v.localService) sc += 3;
+  if (v.default) sc += 1;
+  return sc;
+}
 function pickVoice(lang) {
   const pre = lang.slice(0, 2);
-  const list = voices.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(pre));
-  if (pre === 'en' && db.set.voice) { const v = list.find(v => v.name === db.set.voice); if (v) return v; }
-  const score = v => (goodName.test(v.name) ? 4 : 0) + (v.lang.replace('_', '-').toLowerCase() === (pre === 'en' ? 'en-gb' : 'de-de') ? 2 : 0) + (v.lang.toLowerCase().startsWith('en-us') ? 1 : 0) + (v.localService ? 2 : 0);
-  return list.sort((a, b) => score(b) - score(a))[0];
+  const list = voices.filter(v => v.lang.replace('_', '-').toLowerCase().startsWith(pre) && !BAD_VOICE.test(v.name));
+  return list.sort((a, b) => voiceScore(b, pre) - voiceScore(a, pre))[0];
 }
 let curU = null, ttsUnlocked = false, silentEl = null, lastTts = '';
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -249,6 +260,12 @@ const BOOKS = ['Notting Hill Gate', 'Green Line', 'English G', 'Lighthouse', 'Ac
 const meP = () => profiles.find(p => p.id === curId) || {};
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const GOAL = 12;
+/* Jugendsprache in lustigen Momenten (Sprüche stehen in slang.js, abschaltbar in den Einstellungen) */
+function say(kind, fallback, vars = {}, chance = .5) {
+  const list = window.SLANG && window.SLANG[kind];
+  let t = db.set.slang !== false && list && list.length && Math.random() < chance ? list[rnd(list.length)] : fallback;
+  return t.replace(/\{(\w+)\}/g, (m, k) => vars[k] != null ? vars[k] : (k === 'name' ? (myName() || 'du') : m));
+}
 const myName = () => (profiles.find(p => p.id === curId) || {}).name || '';
 const themeOf = () => (profiles.find(p => p.id === curId) || {}).theme || 'anime';
 function vampireSVG(seed) {
@@ -590,20 +607,20 @@ $('#rv-save').onclick = () => {
 /* ---------- Einstellungen ---------- */
 function renderSettings() {
   const en = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
-  $('#voice').innerHTML = `<option value="">Automatisch (beste Stimme)</option>` + en.map(v => `<option ${v.name === db.set.voice ? 'selected' : ''} value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  { const e = pickVoice('en'), d = pickVoice('de'); $('#voice-best').textContent = window.speechSynthesis ? `Gewählt: Englisch – ${e ? e.name : 'Standardstimme'} · Deutsch – ${d ? d.name : 'Standardstimme'}` : ''; }
   $('#rate').value = db.set.rate; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×';
-  $('#calm').checked = !!db.set.calm; $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak;
+  $('#calm').checked = !!db.set.calm; $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak; $('#slang').checked = db.set.slang !== false;
   $('#store-info').textContent = '💾 Deine Karten werden automatisch in der Datenbank dieses Geräts gespeichert (' + STORE.mode + (STORE.persistent ? ', dauerhaft gesichert' : '') + ').';
   $('#tts-status').textContent = lastTts;
   $('#voice-info').textContent = window.speechSynthesis ? `Gefundene Stimmen: ${voices.length} (englisch: ${en.length})` : '';
-  $('#voice-hint').textContent = !window.speechSynthesis ? 'Dieser Browser hat keine Sprachausgabe.' : en.length ? 'Tipp: Stimmen mit „Natural“, „Premium“ oder „Enhanced“ klingen am besten.' : 'Keine englische Stimme gefunden – installiere eine in den Geräte-Einstellungen (Sprachausgabe).';
+  $('#voice-hint').textContent = !window.speechSynthesis ? 'Dieser Browser hat keine Sprachausgabe.' : en.length ? 'Die App nimmt automatisch die beste Stimme deines Geräts. Bessere Stimmen kannst du in den Geräte-Einstellungen unter Sprachausgabe laden.' : 'Keine englische Stimme gefunden – installiere eine in den Geräte-Einstellungen (Sprachausgabe).';
 }
-$('#voice').onchange = e => { db.set.voice = e.target.value; save(); speak('Hello! Nice to meet you.'); };
 $('#rate').oninput = e => { db.set.rate = +e.target.value; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×'; save(); };
 $('#voice-test').onclick = () => speak('The weather is beautiful today. Let us climb the mountain!');
 $('#calm').onchange = e => { db.set.calm = e.target.checked; save(); refresh(); };
 $('#sound').onchange = e => { db.set.sound = e.target.checked; save(); };
 $('#autospeak').onchange = e => { db.set.autospeak = e.target.checked; save(); };
+$('#slang').onchange = e => { db.set.slang = e.target.checked; save(); };
 $('#export').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 1)], { type: 'application/json' }));
   a.download = 'vokabel-arena-backup-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
@@ -674,7 +691,7 @@ function startGame(cards) {
   const level = db.set.level;
   G = { level, queue: (cards || pickCards(pool())).map(c => ({ c, dir: pickDir(c) })), i: 0, score: 0, combo: 0, best: 0, wrong: [], right: 0, busy: false };
   $('#score').textContent = 0; $('#combo').textContent = 0; $('#prog').style.width = '0';
-  show('game'); toast(`Los geht’s, ${myName() || 'du'}! Du schaffst das 💪`); nextQ();
+  show('game'); toast(say('start', `Los geht’s, ${myName() || 'du'}! Du schaffst das 💪`, {}, .6)); nextQ();
 }
 const stage = $('#stage'), tilt = $('#tilt'), flip = $('#flip'), fl = $('#float');
 async function nextQ() {
@@ -765,7 +782,7 @@ async function resolve(res, input = '', timeout = false) {
   save(); refresh(); $('#score').textContent = G.score; $('#combo').textContent = G.combo;
   const back = $('#back'); back.classList.add(ok ? 'good' : 'bad');
   try { navigator.vibrate && navigator.vibrate(ok ? 25 : [60, 40, 60]); } catch (e) { }
-  $('#verdict').textContent = res === 'ok' ? (G.combo >= 3 ? `🔥 ${G.combo} in Folge – wow!` : '✅ ' + ['Super!', 'Mega!', 'Stark!', 'Boom! 💥', 'Genial!', 'Weiter so!', 'Yeah! 🎉'][rnd(7)]) : res === 'close' ? '👍 Geschafft beim 2. Versuch!' : timeout ? '⏰ Zeit um – kein Problem!' : ['Noch nicht – aber jetzt kennst du es! 💪', 'Fehler helfen beim Lernen 🌟', 'Guter Versuch! Das merkst du dir 💜', 'Fast! Beim nächsten Mal klappt’s 🍀'][rnd(4)];
+  $('#verdict').textContent = res === 'ok' ? (G.combo >= 3 ? say('combo', `🔥 ${G.combo} in Folge – wow!`, { n: G.combo }, .6) : '✅ ' + say('ok', ['Super!', 'Mega!', 'Stark!', 'Boom! 💥', 'Genial!', 'Weiter so!', 'Yeah! 🎉'][rnd(7)], {}, .5)) : res === 'close' ? say('close', '👍 Geschafft beim 2. Versuch!') : timeout ? '⏰ Zeit um – kein Problem!' : say('bad', ['Noch nicht – aber jetzt kennst du es! 💪', 'Fehler helfen beim Lernen 🌟', 'Guter Versuch! Das merkst du dir 💜', 'Fast! Beim nächsten Mal klappt’s 🍀'][rnd(4)], {}, .6);
   $('#ans-sub').textContent = ok ? `+${gain} ⭐${G.combo > 1 ? ' · Combo x' + G.combo : ''}` : (input ? `Du: ${input}` : '');
   setTimeout(() => { flip.classList.add('on'); sfx(ok ? 'ok' : 'bad'); }, 250);
   await wait(700); fl.classList.add(ok ? 'win' : 'shake'); if (ok && G.combo >= 3) confetti(30);
@@ -793,7 +810,7 @@ function endGame() {
   const goalNow = db.today && db.today.n >= GOAL;
   save(); refresh(); show('result');
   $('#stars').innerHTML = [0, 1, 2].map(i => `<span style="animation-delay:${i * .25}s;opacity:${i < stars ? 1 : .2}">⭐</span>`).join('');
-  $('#res-title').textContent = pct === 1 ? `PERFEKT, ${me}! 🏆` : pct >= .9 ? `Fantastisch, ${me}! 🌟` : pct >= .6 ? `Stark gespielt, ${me}! 💪` : `Toll, dass du drangeblieben bist, ${me}! 🌱`;
+  $('#res-title').textContent = pct === 1 ? say('perfect', `PERFEKT, ${me}! 🏆`, {}, .7) : pct >= .9 ? `Fantastisch, ${me}! 🌟` : pct >= .6 ? `Stark gespielt, ${me}! 💪` : `Toll, dass du drangeblieben bist, ${me}! 🌱`;
   $('#res-sub').textContent = (pct >= .6 ? '' : 'Aus Fehlern lernt das Gehirn am meisten. ') + `${G.right} von ${total} richtig` + (G.up ? ` · ${G.up} Wörter sitzen jetzt besser` : '') + (goalNow ? ' · 🎯 Tagesziel geschafft!' : '');
   $('#res-wrong').innerHTML = G.wrong.length ? '<h3>Diese Wörter üben wir noch – du packst das:</h3>' + G.wrong.map(c => `<div class="wr"><b>${esc(c.en)}</b><span>${esc(c.de)}</span></div>`).join('') : '';
   $('#again-wrong').hidden = !G.wrong.length;

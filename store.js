@@ -31,7 +31,9 @@
     del: function (k) { delete mem[k]; if (idb) { try { idb.transaction(ST, 'readwrite').objectStore(ST).delete(k); } catch (e) { } } else try { localStorage.removeItem(k); } catch (e) { } }
   };
   function start() {
-    var s = document.createElement('script'); s.src = 'app.js'; document.body.appendChild(s);
+    var a = document.createElement('script'); a.src = 'slang.js';
+    a.onload = a.onerror = function () { var s = document.createElement('script'); s.src = 'app.js'; document.body.appendChild(s); };
+    document.body.appendChild(a);
   }
   openDB().then(function (d) {
     idb = d;

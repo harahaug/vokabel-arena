@@ -1,6 +1,6 @@
 // Offline-Cache: App-Dateien + (einmal geladene) Texterkennung
 const V = 'vokabelarena-v1';
-const APP = ['./', 'index.html', 'style.css', 'app.js', 'store.js', 'manifest.json', 'icon.svg'];
+const APP = ['./', 'index.html', 'style.css', 'app.js', 'store.js', 'slang.js', 'manifest.json', 'icon.svg'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(APP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== V).map(x => caches.delete(x)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
