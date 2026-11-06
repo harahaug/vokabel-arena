@@ -191,29 +191,51 @@ function pickVoice(lang) {
   const score = v => (goodName.test(v.name) ? 4 : 0) + (v.lang.replace('_', '-').toLowerCase() === (pre === 'en' ? 'en-gb' : 'de-de') ? 2 : 0) + (v.lang.toLowerCase().startsWith('en-us') ? 1 : 0) + (v.localService ? 2 : 0);
   return list.sort((a, b) => score(b) - score(a))[0];
 }
-let curU = null, ttsUnlocked = false;
+let curU = null, ttsUnlocked = false, silentEl = null, lastTts = '';
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function setTts(msg) { lastTts = msg; const el = document.getElementById('tts-status'); if (el) el.textContent = msg; }
+function silentWav() {   // 0,5 s Stille – schaltet auf dem iPhone die Tonausgabe auf „Wiedergabe“
+  const sr = 8000, n = sr / 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf), w = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+}
+function audioSession(on) {
+  if (!isIOS) return;
+  try {
+    if (!silentEl) { silentEl = new Audio(silentWav()); silentEl.loop = true; silentEl.setAttribute('playsinline', ''); }
+    if (on) { const p = silentEl.play(); if (p && p.catch) p.catch(() => { }); } else silentEl.pause();
+  } catch (e) { }
+}
 function unlockSpeech() {   // iPhone/Android erlauben Sprache erst nach einer Berührung
   if (ttsUnlocked || !window.speechSynthesis) return;
-  try { const u = new SpeechSynthesisUtterance('a'); u.volume = 0; speechSynthesis.speak(u); ttsUnlocked = true; } catch (e) { }
+  try { audioSession(true); const u = new SpeechSynthesisUtterance('a'); u.volume = 0; u.onend = () => audioSession(false); speechSynthesis.speak(u); ttsUnlocked = true; } catch (e) { }
 }
 ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlockSpeech, { passive: true }));
 function speak(text, lang = 'en', slow = false, retried = false) {
-  if (!window.speechSynthesis) { toast('Dein Browser kann nicht sprechen 😢'); return; }
+  if (!window.speechSynthesis) { toast('Dein Browser kann nicht sprechen 😢'); setTts('❌ Dieser Browser hat keine Sprachausgabe.'); return; }
   const clean = text.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim(); if (!clean) return;
   if (!voices.length) loadVoices();
-  try { speechSynthesis.cancel(); if (speechSynthesis.paused) speechSynthesis.resume(); } catch (e) { }
-  setTimeout(() => {
+  const run = () => {   // direkt im Fingertipp aufrufen (iPhone verlangt das), nur nach cancel() kurz warten
     const u = curU = new SpeechSynthesisUtterance(clean);   // Referenz halten, sonst bricht Chrome manchmal ab
     u.lang = lang === 'en' ? 'en-GB' : 'de-DE';
     const v = retried ? null : pickVoice(lang);            // 2. Versuch: Standardstimme des Geräts
     if (v) { u.voice = v; u.lang = v.lang.replace('_', '-'); }
     u.rate = Math.max(.4, db.set.rate * (slow ? .6 : 1)); u.pitch = 1; u.volume = 1;
+    let started = false;
+    u.onstart = () => { started = true; setTts('✅ Ton läuft (' + (v ? v.name : 'Standardstimme') + ')'); };
+    u.onend = () => { audioSession(false); };
     u.onerror = ev => {
+      audioSession(false);
       if (!ev.error || ev.error === 'canceled' || ev.error === 'interrupted') return;
+      setTts('❌ Fehler: ' + ev.error);
       if (!retried) speak(text, lang, slow, true); else toast('🔇 Kein Ton – Lautstärke prüfen, dann 🔊 nochmal tippen');
     };
+    audioSession(true);
     try { speechSynthesis.speak(u); } catch (e) { if (!retried) speak(text, lang, slow, true); else toast('🔇 Ton geht gerade nicht'); }
-  }, 80);
+    setTimeout(() => { if (!started && curU === u && !speechSynthesis.speaking) { setTts('⚠️ Der Ton startet nicht. Lautstärke hoch? Stumm-Schalter am iPhone (Seitenknopf) ausschalten?'); toast('🔇 Kein Ton – Stumm-Schalter und Lautstärke prüfen'); audioSession(false); } }, 1800);
+    setTimeout(() => audioSession(false), 20000);
+  };
+  try { if (speechSynthesis.paused) speechSynthesis.resume(); if (speechSynthesis.speaking || speechSynthesis.pending) { speechSynthesis.cancel(); setTimeout(run, 60); } else run(); } catch (e) { run(); }
 }
 
 
@@ -561,6 +583,7 @@ function renderSettings() {
   $('#rate').value = db.set.rate; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×';
   $('#calm').checked = !!db.set.calm; $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak;
   $('#store-info').textContent = '💾 Deine Karten werden automatisch in der Datenbank dieses Geräts gespeichert (' + STORE.mode + (STORE.persistent ? ', dauerhaft gesichert' : '') + ').';
+  $('#tts-status').textContent = lastTts;
   $('#voice-info').textContent = window.speechSynthesis ? `Gefundene Stimmen: ${voices.length} (englisch: ${en.length})` : '';
   $('#voice-hint').textContent = !window.speechSynthesis ? 'Dieser Browser hat keine Sprachausgabe.' : en.length ? 'Tipp: Stimmen mit „Natural“, „Premium“ oder „Enhanced“ klingen am besten.' : 'Keine englische Stimme gefunden – installiere eine in den Geräte-Einstellungen (Sprachausgabe).';
 }
