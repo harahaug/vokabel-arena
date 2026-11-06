@@ -1,0 +1,13 @@
+{
+  "name": "Vokabel-Arena",
+  "short_name": "Vokabel-Arena",
+  "description": "Englisch-Vokabeltrainer mit Sammelkarten für Klasse 7 – von Harald Haug",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1b1147",
+  "theme_color": "#1b1147",
+  "lang": "de",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

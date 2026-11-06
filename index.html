@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1b1147">
+<meta name="description" content="Vokabel-Arena – der Englisch-Vokabeltrainer mit Sammelkarten für Klasse 7. Von Harald Haug.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Vokabel-Arena</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg"><span></span><span></span><span></span></div>
+<canvas id="fx"></canvas>
+
+<header class="top">
+  <button class="logo" data-go="home" aria-label="Startseite">⚡ Vokabel<b>Arena</b></button>
+  <div class="top-stats">
+    <span class="chip" title="Erfahrungspunkte">⭐ <b id="xp">0</b></span>
+    <span class="chip" title="Tage-Serie">🔥 <b id="streak">0</b></span>
+    <button class="chip btn-icon" data-go="settings" aria-label="Einstellungen">⚙️</button>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- HOME -->
+  <section class="view" id="v-home">
+    <div class="hero">
+      <div class="mini-deck" aria-hidden="true"><i></i><i></i><i></i></div>
+      <h1>Sammle Karten.<br>Knack Vokabeln.</h1>
+      <p>Englisch · Klasse 7</p>
+    </div>
+    <div class="menu">
+      <button class="big primary" data-go="setup"><span>🎮</span><div><b>Spielen</b><small id="home-count">–</small></div></button>
+      <button class="big" data-go="scan"><span>📸</span><div><b>Vokabeln scannen</b><small>Foto von deinem Heft</small></div></button>
+      <button class="big" data-go="library"><span>🗂️</span><div><b>Meine Karten</b><small>Sammlung &amp; bearbeiten</small></div></button>
+    </div>
+  </section>
+
+  <!-- SCAN -->
+  <section class="view" id="v-scan" hidden>
+    <h2>📸 Vokabeln scannen</h2>
+    <div class="panel">
+      <p class="hint">Schreib deutlich in <b>zwei Spalten</b> (links Englisch, rechts Deutsch – oder mit „–“ dazwischen), gutes Licht, Heft gerade halten.</p>
+      <div class="row">
+        <label class="btn primary file">📷 Foto aufnehmen<input type="file" id="cam" accept="image/*" capture="environment"></label>
+        <label class="btn file">🖼️ Aus Galerie<input type="file" id="gal" accept="image/*"></label>
+      </div>
+      <div class="row small">
+        <label>Seite enthält
+          <select id="scan-mode"><option value="words">Vokabeln (2 Spalten)</option><option value="verbs">Unregelmäßige Verben (4 Spalten)</option></select>
+        </label>
+      </div>
+      <div class="row small">
+        <label>Linke Spalte ist
+          <select id="scan-left"><option value="en">Englisch</option><option value="de">Deutsch</option></select>
+        </label>
+      </div>
+      <div class="row small">
+        <label>Lektion / Unit (optional)
+          <input id="scan-unit" list="units" placeholder="z. B. Unit 3" autocomplete="off" style="width:150px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25)">
+        </label>
+      </div>
+      <img id="preview" alt="" hidden>
+      <div id="ocr-status" class="status" hidden>
+        <div class="bar"><i id="ocr-bar"></i></div><span id="ocr-text">Bereite vor …</span>
+      </div>
+    </div>
+    <div class="panel" id="review" hidden>
+      <h3>✏️ Prüfen &amp; korrigieren</h3>
+      <p class="hint">Handschrift ist knifflig – bitte kurz drüberschauen. Falsche Zeilen einfach ändern oder abwählen.</p>
+      <div id="review-head" class="rows head"></div>
+      <div id="review-rows"></div>
+      <div class="row">
+        <button class="btn" id="rv-add">➕ Zeile</button>
+        <button class="btn" id="rv-swap">🔄 Spalten tauschen</button>
+        <button class="btn primary" id="rv-save">💾 Karten speichern</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>⌨️ Oder direkt tippen</h3>
+      <button class="btn" id="manual">➕ Neue Karte von Hand anlegen</button>
+    </div>
+  </section>
+
+  <!-- LIBRARY -->
+  <section class="view" id="v-library" hidden>
+    <h2>🗂️ Meine Karten <small id="lib-count"></small></h2>
+    <input class="search" id="lib-search" type="search" placeholder="Suchen …">
+    <div class="grid" id="lib-grid"></div>
+    <div class="row"><button class="btn" id="load-verbs2">🎁 Irregular verbs (S. 255) laden</button></div>
+    <div class="empty" id="lib-empty" hidden>
+      <p>Noch keine Karten! 🃏</p>
+      <button class="btn primary" id="load-starter">🎁 Starter-Set (Klasse 7) laden</button>
+      <button class="btn primary" id="load-verbs">🎁 Irregular verbs (Notting Hill Gate, S. 255) laden</button>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="view" id="v-setup" hidden>
+    <h2>🎮 Neue Runde</h2>
+    <div class="panel">
+      <h3>Schwierigkeit</h3>
+      <div class="seg" id="seg-level">
+        <button data-v="leicht"><b>🌱 Leicht</b><small>Antwort auswählen</small></button>
+        <button data-v="mittel"><b>🔥 Mittel</b><small>Tippen mit Tipp-Hilfe</small></button>
+        <button data-v="schwer"><b>💀 Schwer</b><small>Tippen + Zeit + Hör-Rätsel</small></button>
+      </div>
+      <h3>Abfrage-Richtung</h3>
+      <div class="seg" id="seg-dir">
+        <button data-v="mix"><b>🎲 Gemischt</b><small>jede Karte zufällig</small></button>
+        <button data-v="en-de"><b>🇬🇧 → 🇩🇪</b><small>Englisch sehen</small></button>
+        <button data-v="de-en"><b>🇩🇪 → 🇬🇧</b><small>Deutsch sehen</small></button>
+      </div>
+      <h3>Lektion</h3>
+      <select id="unit-sel" style="width:100%;padding:10px"></select>
+      <h3>Anzahl Karten</h3>
+      <div class="seg small" id="seg-num">
+        <button data-v="5"><b>5</b></button><button data-v="10"><b>10</b></button><button data-v="20"><b>20</b></button><button data-v="all"><b>Alle</b></button>
+      </div>
+      <button class="btn primary huge" id="start">🚀 Los geht’s!</button>
+      <p class="hint" id="setup-warn" hidden></p>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section class="view" id="v-game" hidden>
+    <div class="gbar">
+      <button class="chip btn-icon" id="quit" aria-label="Beenden">✖</button>
+      <div class="progress"><i id="prog"></i></div>
+      <span class="chip">🔥 x<b id="combo">0</b></span>
+      <span class="chip">⭐ <b id="score">0</b></span>
+    </div>
+    <div id="timer" class="timer" hidden><i></i></div>
+    <div class="stage" id="stage">
+      <div class="float" id="float">
+        <div class="tilt" id="tilt">
+          <div class="flip" id="flip">
+            <div class="face front" id="front"></div>
+            <div class="face back" id="back"></div>
+          </div>
+        </div>
+      </div>
+      <div class="shadow"></div>
+    </div>
+    <div id="answer-area" class="answer-area"></div>
+    <div id="toast" class="toast"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="view" id="v-result" hidden>
+    <div class="panel center">
+      <div class="stars" id="stars"></div>
+      <h2 id="res-title">Geschafft!</h2>
+      <p id="res-sub"></p>
+      <div id="res-wrong"></div>
+      <div class="row center">
+        <button class="btn primary" id="again-wrong">🔁 Fehler üben</button>
+        <button class="btn primary" id="again">🎮 Nochmal</button>
+        <button class="btn" data-go="home">🏠 Start</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="v-settings" hidden>
+    <h2>⚙️ Einstellungen</h2>
+    <div class="panel">
+      <h3>🔊 Aussprache</h3>
+      <label class="field">Englische Stimme
+        <select id="voice"></select>
+      </label>
+      <label class="field">Sprechtempo <output id="rate-out"></output>
+        <input type="range" id="rate" min="0.5" max="1.2" step="0.05">
+      </label>
+      <div class="row">
+        <button class="btn" id="voice-test">▶️ Testen</button>
+        <label class="check"><input type="checkbox" id="sound"> Spiel-Sounds</label>
+        <label class="check"><input type="checkbox" id="autospeak"> Automatisch vorlesen</label>
+      </div>
+      <p class="hint" id="voice-hint"></p>
+    </div>
+    <div class="panel">
+      <h3>💾 Meine Daten</h3>
+      <p class="hint">Alles wird nur auf <b>diesem Gerät</b> gespeichert. Mit dem Backup kannst du Karten auf ein anderes Gerät mitnehmen.</p>
+      <div class="row">
+        <button class="btn" id="export">⬇️ Backup speichern</button>
+        <label class="btn file">⬆️ Backup laden<input type="file" id="import" accept="application/json"></label>
+        <button class="btn danger" id="wipe">🗑️ Alles löschen</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">Gemacht mit 💜 von <b>Harald Haug</b> · Vokabel-Arena v1</footer>
+
+<dialog id="dlg">
+  <form method="dialog" id="dlg-form">
+    <h3 id="dlg-title">Karte</h3>
+    <label class="field">🇬🇧 Englisch<input id="dlg-en" autocomplete="off" autocapitalize="off"></label>
+    <label class="field">🇩🇪 Deutsch<input id="dlg-de" autocomplete="off"></label>
+    <label class="field">🔁 Verb-Formen (Past, Participle) – nur bei unregelmäßigen Verben<input id="dlg-forms" autocomplete="off" placeholder="z. B. went, gone"></label>
+    <label class="field">📘 Lektion / Unit<input id="dlg-unit" list="units" autocomplete="off" placeholder="z. B. Unit 3"></label>
+    <div class="row">
+      <button class="btn" id="dlg-speak" type="button">🔊</button>
+      <button class="btn danger" id="dlg-del" type="button">🗑️</button>
+      <span class="grow"></span>
+      <button class="btn" value="cancel">Abbrechen</button>
+      <button class="btn primary" id="dlg-ok" value="ok">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="units"></datalist>
+<script src="app.js"></script>
+</body>
+</html>
