@@ -437,6 +437,7 @@ function renderLib() {
 $('#lib-search').oninput = renderLib;
 $('#lib-grid').onclick = e => { const m = e.target.closest('.mc'); if (m) editCard(m.dataset.id); };
 $('#calm-btn').onclick = () => { db.set.calm = !db.set.calm; save(); refresh(); toast(db.set.calm ? '🧘 Ruhig: weniger Bewegung, kein Zeitdruck' : '🎉 Action: Konfetti, Glanz und Zeit-Rätsel'); };
+$('#setup-starter').onclick = () => { addCards(STARTER); sfx('win'); toast('🎁 40 Karten gelegt – jetzt Schwierigkeit wählen!'); renderSetup(); };
 $('#home-starter').onclick = () => { addCards(STARTER); sfx('win'); confetti(); toast('🎁 40 Karten gelegt!'); refresh(); };
 $('#load-verbs2').onclick = $('#load-verbs').onclick = () => { const n = addVerbs(IRREG); sfx('win'); confetti(); toast(`🎁 ${n} Verben-Karten gelegt!`); renderLib(); };
 $('#load-starter').onclick = () => { const n = addCards(STARTER); sfx('win'); confetti(); toast(`🎁 ${n} Karten gelegt!`); renderLib(); };
@@ -590,7 +591,7 @@ function renderSetup() {
   $('#d-from').value = db.set.from || ''; $('#d-to').value = db.set.to || '';
   $('#pool-info').textContent = `Damit spielst du ${pool().length} Karten.`;
   const w = $('#setup-warn');
-  w.hidden = db.cards.length > 0; w.textContent = 'Du hast noch keine Karten – scanne dein Heft oder lade das Starter-Set unter „Meine Karten“.';
+  w.hidden = true; $('#setup-empty').hidden = db.cards.length > 0; $('#seg-level').hidden = db.cards.length === 0;
 }
 for (const [id, k] of [['seg-dir', 'dir'], ['seg-num', 'num']])
   $('#' + id).onclick = e => { const b = e.target.closest('button'); if (b) { db.set[k] = b.dataset.v; save(); sfx('tap'); renderSetup(); } };
@@ -599,7 +600,11 @@ $('#when-sel').onchange = e => { db.set.when = e.target.value; save(); renderSet
 $('#d-from').onchange = e => { db.set.from = e.target.value; save(); renderSetup(); };
 $('#d-to').onchange = e => { db.set.to = e.target.value; save(); renderSetup(); };
 $('#seg-level').onclick = e => { const b = e.target.closest('button'); if (!b) return; db.set.level = b.dataset.v; save(); sfx('tap'); startFromSetup(); };
-function startFromSetup() { if (!db.cards.length) { toast('Erst Karten sammeln 🃏'); return; } if (!pool().length) { toast('Für diese Auswahl gibt es keine Karten 📅'); return; } startGame(); }
+function startFromSetup() {
+  if (!db.cards.length) { renderSetup(); return; }
+  if (!pool().length) { db.set.when = 'all'; db.set.unit = ''; save(); toast('Auswahl zurückgesetzt – es geht los 🎮'); }   // sonst bleibt das Kind bei leerem Filter hängen
+  try { startGame(); } catch (err) { console.error(err); toast('⚠️ Fehler: ' + (err && err.message)); show('setup'); }
+}
 
 /* ---------- Antworten prüfen ---------- */
 const clean = s => s.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss').replace(/\(.*?\)/g, ' ').replace(/[.,!?;:"'’`´]/g, '').replace(/\s+/g, ' ').trim();
@@ -786,3 +791,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) naviga
 /* Kein Zoom (iPhone ignoriert user-scalable=no teilweise): Pinch- und Doppeltipp-Zoom blockieren */
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+
+/* Fehler sichtbar machen (hilft bei der Fehlersuche auf dem Handy) */
+window.addEventListener('error', e => { try { toast('⚠️ ' + (e.message || 'Fehler')); } catch (x) { } });
+window.addEventListener('unhandledrejection', e => { try { toast('⚠️ ' + ((e.reason && e.reason.message) || 'Fehler')); } catch (x) { } });
