@@ -257,3 +257,7 @@ body.calm .gbar .chip:nth-of-type(2){display:none}
 @keyframes calmout{to{opacity:0;transform:translateY(-10px)}}
 
 .big-check{font-size:17px;padding:10px 0}.big-check input{width:22px;height:22px;accent-color:var(--pri)}.big-check small{color:var(--mut)}
+
+.seg-wrap{display:flex;align-items:center;gap:6px}.seg-wrap .seg.pick{flex:1;min-width:0;scrollbar-width:none}.seg-wrap .seg.pick::-webkit-scrollbar{display:none}
+.arrow{flex:0 0 44px;height:56px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.14);color:#fff;font-size:20px;cursor:pointer}
+.arrow:active{transform:scale(.92)}

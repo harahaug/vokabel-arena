@@ -378,7 +378,7 @@ function addProfile() {
   const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed, opts: pickOpts }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
 let edOpen = false, pickTheme = 'custom', pickSeed = uid(), pickOpts = { ...AVDEF }, editingP = null;
-const THEMES = [['custom', '✏️', 'Selbst bauen'], ['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎧', 'Funk'], ['phonk', '🔥', 'Phonk']];
+const THEMES = [['custom', '✏️', 'Selbst bauen'], ['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎤', 'Rap'], ['phonk', '🔥', 'Phonk']];
 function renderPicker() {
   $('#theme-seg').innerHTML = THEMES.map(([k, i, n]) => `<button data-v="${k}" class="${k === pickTheme ? 'on' : ''}"><b>${i}</b><small style="display:block">${n}</small></button>`).join('');
   $('#prof-prev').innerHTML = pickTheme === 'custom' ? customSVG(pickOpts) : animeSVG(pickSeed, pickTheme);
@@ -389,6 +389,9 @@ function renderPicker() {
 $('#ed-toggle').onclick = () => { edOpen = !edOpen; $('#ed-toggle').textContent = edOpen ? '▲ Weniger Einstellungen' : '✏️ Figur genauer einstellen'; renderPicker(); };
 $('#editor').onclick = e => { const b = e.target.closest('[data-k]'); if (b) { pickOpts[b.dataset.k] = +b.dataset.i; sfx('tap'); renderPicker(); } };
 $('#theme-seg').onclick = e => { const b = e.target.closest('button'); if (b) { pickTheme = b.dataset.v; sfx('tap'); renderPicker(); } };
+const scrollThemes = d => $('#theme-seg').scrollBy({ left: d * 170, behavior: 'smooth' });
+$('#th-prev').onclick = () => { sfx('tap'); scrollThemes(-1); };
+$('#th-next').onclick = () => { sfx('tap'); scrollThemes(1); };
 $('#prof-dice').onclick = () => { pickSeed = uid(); pickOpts = avRandom(); sfx('flip'); renderPicker(); };
 renderPicker();
 $('#prof-add').onclick = addProfile; $('#prof-name').onkeydown = e => { if (e.key === 'Enter') addProfile(); };
