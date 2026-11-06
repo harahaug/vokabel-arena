@@ -94,13 +94,14 @@ hurt|hurt|hurt|wehtun, schmerzen; verletzen`.split('\n').map(l => l.split('|'));
 /* ---------- Speicher ---------- */
 const PK = 'vokabelarena.profiles', CK = 'vokabelarena.current', OLD = 'vokabelarena.v1';
 const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } }, del: k => { try { localStorage.removeItem(k); } catch (e) { } } };
-const defaults = () => ({ cards: [], set: { dir: 'mix', level: 'mittel', num: '10', sound: true, autospeak: true, voice: '', rate: 0.85 }, xp: 0, streak: 0, lastDay: '' });
+const defaults = () => ({ cards: [], set: { dir: 'mix', level: 'mittel', num: '5', calm: true, sound: true, autospeak: true, voice: '', rate: 0.85 }, xp: 0, streak: 0, lastDay: '' });
 let profiles = []; try { profiles = JSON.parse(ls.get(PK)) || []; } catch (e) { }
 if (!profiles.length && ls.get(OLD)) { profiles = [{ id: 'p1', name: 'Ich' }]; ls.set('vokabelarena.v1.p1', ls.get(OLD)); ls.set(PK, JSON.stringify(profiles)); }   // alte Daten übernehmen
 let curId = '', db = defaults();
 const key = () => OLD + '.' + curId;
+const applyCalm = () => document.body.classList.toggle('calm', !!db.set.calm);
 function loadDB() { db = defaults(); try { const raw = JSON.parse(ls.get(key())); if (raw) db = { ...defaults(), ...raw, set: { ...defaults().set, ...raw.set } }; } catch (e) { } }
-const save = () => { if (curId) ls.set(key(), JSON.stringify(db)); };
+const save = () => { applyCalm(); if (curId) ls.set(key(), JSON.stringify(db)); };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const norm0 = s => s.trim().replace(/\s+/g, ' ');
 function addCards(pairs, unit = '') {
@@ -152,6 +153,8 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-go]'
 function refresh() {
   const me = profiles.find(p => p.id === curId); $('#who').textContent = '👤 ' + (me ? me.name : '–');
   $('#xp').textContent = db.xp; $('#streak').textContent = db.streak;
+  $('#calm-btn').textContent = db.set.calm ? '🧘 Ruhig-Modus: AN' : '🎉 Action-Modus: AN';
+  $('#home-empty').hidden = db.cards.length > 0;
   $('#home-count').textContent = db.cards.length ? `${db.cards.length} Karten bereit` : 'Erst Karten sammeln!';
 }
 let toastT;
@@ -355,7 +358,7 @@ function animeSVG(seed, theme = themeOf()) {
   <ellipse cx="36" cy="82" rx="5" ry="3" fill="#ff8fab" opacity=".55"/><ellipse cx="84" cy="82" rx="5" ry="3" fill="#ff8fab" opacity=".55"/>${mouth}</svg>`;
 }
 /* ---------- Spieler / Profile (pro Gerät) ---------- */
-function login(id) { curId = id; ls.set(CK, id); loadDB(); fillUnits(); refresh(); show('home'); }
+function login(id) { curId = id; ls.set(CK, id); loadDB(); applyCalm(); fillUnits(); refresh(); show('home'); }
 function renderProfiles() {
   $('#prof-grid').innerHTML = profiles.map((p, i) => `<div class="mc r${(hash(p.name) % 4) + 1}" data-id="${p.id}" style="animation-delay:${i * 60}ms">
     <div class="t"><span>SPIELER</span><span><button class="pdel" data-edit="${p.id}" aria-label="Avatar ändern">✏️</button><button class="pdel" data-del="${p.id}" aria-label="Löschen">✖</button></span></div>
@@ -407,6 +410,8 @@ function renderLib() {
 }
 $('#lib-search').oninput = renderLib;
 $('#lib-grid').onclick = e => { const m = e.target.closest('.mc'); if (m) editCard(m.dataset.id); };
+$('#calm-btn').onclick = () => { db.set.calm = !db.set.calm; save(); refresh(); toast(db.set.calm ? '🧘 Ruhig: weniger Bewegung, kein Zeitdruck' : '🎉 Action: Konfetti, Glanz und Zeit-Rätsel'); };
+$('#home-starter').onclick = () => { addCards(STARTER); sfx('win'); confetti(); toast('🎁 40 Karten gelegt!'); refresh(); };
 $('#load-verbs2').onclick = $('#load-verbs').onclick = () => { const n = addVerbs(IRREG); sfx('win'); confetti(); toast(`🎁 ${n} Verben-Karten gelegt!`); renderLib(); };
 $('#load-starter').onclick = () => { const n = addCards(STARTER); sfx('win'); confetti(); toast(`🎁 ${n} Karten gelegt!`); renderLib(); };
 
@@ -526,12 +531,13 @@ function renderSettings() {
   const en = voices.filter(v => v.lang.toLowerCase().startsWith('en'));
   $('#voice').innerHTML = `<option value="">Automatisch (beste Stimme)</option>` + en.map(v => `<option ${v.name === db.set.voice ? 'selected' : ''} value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
   $('#rate').value = db.set.rate; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×';
-  $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak;
+  $('#calm').checked = !!db.set.calm; $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak;
   $('#voice-hint').textContent = !window.speechSynthesis ? 'Dieser Browser hat keine Sprachausgabe.' : en.length ? 'Tipp: Stimmen mit „Natural“, „Premium“ oder „Enhanced“ klingen am besten.' : 'Keine englische Stimme gefunden – installiere eine in den Geräte-Einstellungen (Sprachausgabe).';
 }
 $('#voice').onchange = e => { db.set.voice = e.target.value; save(); speak('Hello! Nice to meet you.'); };
 $('#rate').oninput = e => { db.set.rate = +e.target.value; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×'; save(); };
 $('#voice-test').onclick = () => speak('The weather is beautiful today. Let us climb the mountain!');
+$('#calm').onchange = e => { db.set.calm = e.target.checked; save(); refresh(); };
 $('#sound').onchange = e => { db.set.sound = e.target.checked; save(); };
 $('#autospeak').onchange = e => { db.set.autospeak = e.target.checked; save(); };
 $('#export').onclick = () => {
@@ -547,7 +553,7 @@ $('#wipe').onclick = () => { if (confirm('Wirklich ALLE Karten und Punkte lösch
 
 /* ---------- Setup ---------- */
 function renderSetup() {
-  for (const [id, k] of [['seg-level', 'level'], ['seg-dir', 'dir'], ['seg-num', 'num']])
+  for (const [id, k] of [['seg-dir', 'dir'], ['seg-num', 'num']])
     $$('#' + id + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === db.set[k]));
   const us = units(); if (db.set.unit && !us.includes(db.set.unit)) db.set.unit = '';
   $('#unit-sel').innerHTML = `<option value="">Alle Karten (${db.cards.length})</option>` + us.map(u => `<option ${u === db.set.unit ? 'selected' : ''} value="${esc(u)}">${esc(u)} (${db.cards.filter(c => c.unit === u).length})</option>`).join('');
@@ -558,13 +564,14 @@ function renderSetup() {
   const w = $('#setup-warn');
   w.hidden = db.cards.length > 0; w.textContent = 'Du hast noch keine Karten – scanne dein Heft oder lade das Starter-Set unter „Meine Karten“.';
 }
-for (const [id, k] of [['seg-level', 'level'], ['seg-dir', 'dir'], ['seg-num', 'num']])
+for (const [id, k] of [['seg-dir', 'dir'], ['seg-num', 'num']])
   $('#' + id).onclick = e => { const b = e.target.closest('button'); if (b) { db.set[k] = b.dataset.v; save(); sfx('tap'); renderSetup(); } };
 $('#unit-sel').onchange = e => { db.set.unit = e.target.value; save(); renderSetup(); };
 $('#when-sel').onchange = e => { db.set.when = e.target.value; save(); renderSetup(); };
 $('#d-from').onchange = e => { db.set.from = e.target.value; save(); renderSetup(); };
 $('#d-to').onchange = e => { db.set.to = e.target.value; save(); renderSetup(); };
-$('#start').onclick = () => { if (!db.cards.length) { toast('Erst Karten sammeln 🃏'); return; } if (!pool().length) { toast('Für diese Auswahl gibt es keine Karten 📅'); return; } startGame(); };
+$('#seg-level').onclick = e => { const b = e.target.closest('button'); if (!b) return; db.set.level = b.dataset.v; save(); sfx('tap'); startFromSetup(); };
+function startFromSetup() { if (!db.cards.length) { toast('Erst Karten sammeln 🃏'); return; } if (!pool().length) { toast('Für diese Auswahl gibt es keine Karten 📅'); return; } startGame(); }
 
 /* ---------- Antworten prüfen ---------- */
 const clean = s => s.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss').replace(/\(.*?\)/g, ' ').replace(/[.,!?;:"'’`´]/g, '').replace(/\s+/g, ' ').trim();
@@ -618,7 +625,7 @@ async function nextQ() {
   await wait(750); fl.classList.remove('deal');
   if (q.listen || ((q.dir === 'en-de' || q.dir === 'forms') && db.set.autospeak)) speak(q.c.en, 'en');
   buildAnswer(q, to, forms ? q.c.forms : text[to]); G.busy = false;
-  if (LV[G.level].time) startTimer(LV[G.level].time);
+  if (LV[G.level].time && !db.set.calm) startTimer(LV[G.level].time);
 }
 function faceHTML(q, r, from, word, front) {
   return `<div class="sparkles"></div><div class="ct"><span class="tag">${from === 'en' ? '🇬🇧 ENGLISCH' : '🇩🇪 DEUTSCH'}</span><span class="lvl">${RN[r]}</span></div>
@@ -669,13 +676,14 @@ function stopTimer() { clearInterval(tInt); }
 async function resolve(res, input = '', timeout = false) {
   if (G.busy) return; G.busy = true; stopTimer();
   const q = G.q, c = q.c, ok = res === 'ok' || res === 'close';
-  const quick = G.t0 && G.level === 'schwer' ? Math.max(0, 1 - (performance.now() - G.t0) / (LV.schwer.time * 1000)) : 0;
+  const quick = G.t0 && G.level === 'schwer' && !db.set.calm ? Math.max(0, 1 - (performance.now() - G.t0) / (LV.schwer.time * 1000)) : 0;
   let gain = 0;
   if (ok) { G.combo++; G.best = Math.max(G.best, G.combo); G.right++; gain = Math.round((LV[G.level].pts - q.hints * 6 + quick * 15) * (res === 'close' ? .6 : 1) * (1 + Math.min(G.combo - 1, 5) * .2)); gain = Math.max(3, gain); G.score += gain; db.xp += gain; c.ok++; c.box = Math.min(4, c.box + (res === 'close' ? 0 : 1)); }
   else { G.combo = 0; G.wrong.push(c); c.bad++; c.box = Math.max(0, c.box - 1); }
   save(); refresh(); $('#score').textContent = G.score; $('#combo').textContent = G.combo;
   const back = $('#back'); back.classList.add(ok ? 'good' : 'bad');
-  $('#verdict').textContent = res === 'ok' ? '✅ Richtig!' : res === 'close' ? '👍 Fast – knapp daneben' : timeout ? '⏰ Zeit um!' : '❌ Leider falsch';
+  try { navigator.vibrate && navigator.vibrate(ok ? 25 : [60, 40, 60]); } catch (e) { }
+  $('#verdict').textContent = res === 'ok' ? '✅ ' + ['Super!', 'Mega!', 'Stark!', 'Boom! 💥', 'Genial!', 'Weiter so!', 'Yeah! 🎉'][rnd(7)] : res === 'close' ? '👍 Fast – knapp daneben' : timeout ? '⏰ Zeit um!' : '❌ Leider falsch';
   $('#ans-sub').textContent = ok ? `+${gain} ⭐${G.combo > 1 ? ' · Combo x' + G.combo : ''}` : (input ? `Du: ${input}` : '');
   setTimeout(() => { flip.classList.add('on'); sfx(ok ? 'ok' : 'bad'); }, 250);
   await wait(700); fl.classList.add(ok ? 'win' : 'shake'); if (ok && G.combo >= 3) confetti(30);
@@ -707,6 +715,7 @@ $('#again-wrong').onclick = () => startGame([...G.wrong]);
 
 /* ---------- 3D-Karte: Neigung + Hologlanz ---------- */
 function tiltMove(e) {
+  if (db.set.calm) return;
   const r = stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
   const cx = Math.max(0, Math.min(1, x)), cy = Math.max(0, Math.min(1, y));
   tilt.classList.remove('rest');
@@ -716,12 +725,13 @@ function tiltMove(e) {
 function tiltEnd() { tilt.classList.add('rest'); tilt.style.setProperty('--rx', '0deg'); tilt.style.setProperty('--ry', '0deg'); }
 stage.addEventListener('pointermove', tiltMove); stage.addEventListener('pointerleave', tiltEnd); stage.addEventListener('pointerup', e => { if (e.pointerType === 'touch') setTimeout(tiltEnd, 400); });
 // Handy-Neigung (wo erlaubt)
-window.addEventListener('deviceorientation', e => { if (!G || $('#v-game').hidden || e.gamma == null) return; const g = Math.max(-25, Math.min(25, e.gamma)), b = Math.max(-25, Math.min(25, (e.beta || 45) - 45)); tilt.classList.remove('rest'); tilt.style.setProperty('--ry', g * .8 + 'deg'); tilt.style.setProperty('--rx', -b * .6 + 'deg'); for (const f of [$('#front'), $('#back')]) { f.style.setProperty('--mx', (50 + g * 2) + '%'); f.style.setProperty('--my', (50 + b * 2) + '%'); } });
+window.addEventListener('deviceorientation', e => { if (db.set.calm || !G || $('#v-game').hidden || e.gamma == null) return; const g = Math.max(-25, Math.min(25, e.gamma)), b = Math.max(-25, Math.min(25, (e.beta || 45) - 45)); tilt.classList.remove('rest'); tilt.style.setProperty('--ry', g * .8 + 'deg'); tilt.style.setProperty('--rx', -b * .6 + 'deg'); for (const f of [$('#front'), $('#back')]) { f.style.setProperty('--mx', (50 + g * 2) + '%'); f.style.setProperty('--my', (50 + b * 2) + '%'); } });
 
 /* ---------- Konfetti ---------- */
 const fx = $('#fx'), fxc = fx.getContext('2d'); let parts = [], raf;
 function sizeFx() { fx.width = innerWidth * devicePixelRatio; fx.height = innerHeight * devicePixelRatio; } sizeFx(); addEventListener('resize', sizeFx);
 function confetti(n = 90) {
+  if (db.set.calm) return;
   if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
   const d = devicePixelRatio, cols = ['#ffd23f', '#ff4fa3', '#3de1ff', '#35e08a', '#7c5cff', '#ff8a3d'];
   for (let i = 0; i < n; i++)parts.push({ x: fx.width / 2, y: fx.height * .45, vx: (Math.random() - .5) * 14 * d, vy: (-Math.random() * 14 - 4) * d, s: (4 + Math.random() * 6) * d, c: cols[rnd(6)], r: Math.random() * 6, vr: (Math.random() - .5) * .4, life: 1 });

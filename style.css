@@ -232,3 +232,26 @@ html,body{overflow-x:hidden;max-width:100%}
 .seg.pick{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
 .seg.pick button{flex:0 0 78px;scroll-snap-align:start}
 #ed-toggle{width:100%;margin:10px 0}
+
+.levels{display:grid;gap:12px;margin:10px 0 6px}
+.lv{display:flex;align-items:center;gap:16px;text-align:left;border:0;border-radius:22px;padding:20px;cursor:pointer;color:#fff;transition:transform .15s;box-shadow:0 8px 0 rgba(0,0,0,.35),0 14px 30px rgba(0,0,0,.3)}
+.lv:active{transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.lv span{font-size:44px}.lv b{font-size:24px;display:block}.lv small{font-size:15px;opacity:.9}
+.l1{background:linear-gradient(135deg,#12b886,#35e08a)}.l2{background:linear-gradient(135deg,#ff8a3d,#ffb400)}.l3{background:linear-gradient(135deg,#6a2cff,#ff2e90)}
+.hint.center{text-align:center}.more{margin:14px 0}.more summary{cursor:pointer;color:var(--mut);padding:8px}
+.big{padding:20px 18px}.big b{font-size:21px}.btn{min-height:46px}
+
+.calm-btn{display:block;margin:0 auto 14px;cursor:pointer;font-weight:700;padding:8px 16px}
+/* Ruhig-Modus: wenig Bewegung, wenig Ablenkung, klare Kontraste */
+body.calm .bg span{animation:none;opacity:.25}
+body.calm .float,body.calm .shadow,body.calm .mini-deck i,body.calm .anime,body.calm .art::before{animation:none!important}
+body.calm .face::before,body.calm .face::after,body.calm .sparkles{display:none!important}
+body.calm .float.deal{animation:calmin .35s ease-out both!important}
+body.calm .float.out{animation:calmout .25s ease-in both!important}
+body.calm .float.win,body.calm .float.shake{animation:none!important}
+body.calm .flip{transition-duration:.35s}
+body.calm .view{animation:none}
+body.calm #combo,body.calm #timer{display:none}
+body.calm .gbar .chip:nth-of-type(2){display:none}
+@keyframes calmin{from{opacity:0;transform:translateY(10px)}}
+@keyframes calmout{to{opacity:0;transform:translateY(-10px)}}

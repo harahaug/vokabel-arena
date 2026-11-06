@@ -53,6 +53,11 @@
       <p>Englisch · Klasse 7</p>
       <p class="by">✨ Erstellt von <b>Harald Haug</b></p>
     </div>
+    <div class="panel center" id="home-empty" hidden>
+      <p><b>Los geht’s!</b> Hol dir zuerst Karten 🃏</p>
+      <div class="row center"><button class="btn primary" data-go="scan">📸 Heft fotografieren</button><button class="btn" id="home-starter">🎁 Start-Karten</button></div>
+    </div>
+    <button class="chip calm-btn" id="calm-btn" type="button"></button>
     <div class="menu">
       <button class="big primary" data-go="setup"><span>🎮</span><div><b>Spielen</b><small id="home-count">–</small></div></button>
       <button class="big" data-go="scan"><span>📸</span><div><b>Vokabeln scannen</b><small>Foto von deinem Heft</small></div></button>
@@ -121,37 +126,38 @@
 
   <!-- SETUP -->
   <section class="view" id="v-setup" hidden>
-    <h2>🎮 Neue Runde</h2>
-    <div class="panel">
-      <h3>Schwierigkeit</h3>
-      <div class="seg" id="seg-level">
-        <button data-v="leicht"><b>🌱 Leicht</b><small>Antwort auswählen</small></button>
-        <button data-v="mittel"><b>🔥 Mittel</b><small>Tippen mit Tipp-Hilfe</small></button>
-        <button data-v="schwer"><b>💀 Schwer</b><small>Tippen + Zeit + Hör-Rätsel</small></button>
-      </div>
-      <h3>Abfrage-Richtung</h3>
-      <div class="seg" id="seg-dir">
-        <button data-v="mix"><b>🎲 Gemischt</b><small>jede Karte zufällig</small></button>
-        <button data-v="en-de"><b>🇬🇧 → 🇩🇪</b><small>Englisch sehen</small></button>
-        <button data-v="de-en"><b>🇩🇪 → 🇬🇧</b><small>Deutsch sehen</small></button>
-      </div>
-      <h3>📅 Wann hast du die Vokabeln eingescannt?</h3>
-      <select id="when-sel" style="width:100%;padding:10px">
-        <option value="all">Alle</option><option value="today">Heute</option><option value="week">Diese Woche</option><option value="month">Dieser Monat</option><option value="range">Eigener Zeitraum …</option>
-      </select>
-      <div class="row small" id="range-row" hidden>
-        <label>von <input type="date" id="d-from" class="date"></label><label>bis <input type="date" id="d-to" class="date"></label>
-      </div>
-      <p class="hint" id="pool-info"></p>
-      <h3>Lektion</h3>
-      <select id="unit-sel" style="width:100%;padding:10px"></select>
-      <h3>Anzahl Karten</h3>
-      <div class="seg small" id="seg-num">
-        <button data-v="5"><b>5</b></button><button data-v="10"><b>10</b></button><button data-v="20"><b>20</b></button><button data-v="all"><b>Alle</b></button>
-      </div>
-      <button class="btn primary huge" id="start">🚀 Los geht’s!</button>
-      <p class="hint" id="setup-warn" hidden></p>
+    <h2>🎮 Wie schwer?</h2>
+    <p class="hint" id="setup-warn" hidden></p>
+    <div class="levels" id="seg-level">
+      <button data-v="leicht" class="lv l1"><span>🌱</span><div><b>Leicht</b><small>Antwort antippen</small></div></button>
+      <button data-v="mittel" class="lv l2"><span>🔥</span><div><b>Mittel</b><small>Selbst tippen, mit Tipp</small></div></button>
+      <button data-v="schwer" class="lv l3"><span>💀</span><div><b>Schwer</b><small>Ohne Tipp, mit Hör-Rätsel</small></div></button>
     </div>
+    <p class="hint center" id="pool-info"></p>
+    <details class="more">
+      <summary>⚙️ Mehr Optionen</summary>
+      <div class="panel">
+        <h3>Abfrage-Richtung</h3>
+        <div class="seg" id="seg-dir">
+          <button data-v="mix"><b>🎲 Gemischt</b><small>jede Karte zufällig</small></button>
+          <button data-v="en-de"><b>🇬🇧 → 🇩🇪</b><small>Englisch sehen</small></button>
+          <button data-v="de-en"><b>🇩🇪 → 🇬🇧</b><small>Deutsch sehen</small></button>
+        </div>
+        <h3>📅 Wann eingescannt?</h3>
+        <select id="when-sel" style="width:100%;padding:10px">
+          <option value="all">Alle</option><option value="today">Heute</option><option value="week">Diese Woche</option><option value="month">Dieser Monat</option><option value="range">Eigener Zeitraum …</option>
+        </select>
+        <div class="row small" id="range-row" hidden>
+          <label>von <input type="date" id="d-from" class="date"></label><label>bis <input type="date" id="d-to" class="date"></label>
+        </div>
+        <h3>Lektion</h3>
+        <select id="unit-sel" style="width:100%;padding:10px"></select>
+        <h3>Anzahl Karten</h3>
+        <div class="seg small" id="seg-num">
+          <button data-v="5"><b>5</b></button><button data-v="10"><b>10</b></button><button data-v="20"><b>20</b></button><button data-v="all"><b>Alle</b></button>
+        </div>
+      </div>
+    </details>
   </section>
 
   <!-- GAME -->
@@ -206,6 +212,7 @@
       </label>
       <div class="row">
         <button class="btn" id="voice-test">▶️ Testen</button>
+        <label class="check"><input type="checkbox" id="calm"> 🧘 Ruhig-Modus (weniger Bewegung, kein Zeitdruck)</label>
         <label class="check"><input type="checkbox" id="sound"> Spiel-Sounds</label>
         <label class="check"><input type="checkbox" id="autospeak"> Automatisch vorlesen</label>
       </div>
