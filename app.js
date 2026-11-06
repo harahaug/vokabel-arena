@@ -523,7 +523,7 @@ async function scanFile(file) {
     if (scanMode === 'verbs') scanRows = parseVerbs(data.text).map(t => ({ t, on: true }));
     else { let r = parseOCR(data.text); if ($('#scan-left').value === 'de') r = r.map(([a, b]) => [b, a]); scanRows = r.map(t => ({ t, on: !!(t[0] || t[1]) })); }
     if (!scanRows.length) { toast('Nichts erkannt – bitte nochmal oder von Hand tippen'); scanRows = [blankRow()]; }
-    renderReview(); sfx('ok');
+    renderReview(); sfx('ok'); $('#review').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (err) {
     st.hidden = true;
     toast(err.message === 'offline' ? '📡 Für die Texterkennung brauchst du kurz Internet' : '😕 Das hat nicht geklappt');
@@ -535,7 +535,7 @@ $('#gal').onchange = e => { scanFile(e.target.files[0]); e.target.value = ''; };
 const blankRow = () => ({ t: scanMode === 'verbs' ? ['', '', '', ''] : ['', ''], on: true });
 function renderReview() {
   const v = scanMode === 'verbs';
-  $('#review').hidden = false; $('#rv-swap').hidden = v;
+  $('#review').hidden = false; $('#rv-swap').hidden = v; $('#rv-save').textContent = '💾 ' + scanRows.length + ' Karten speichern';
   $('#review-head').className = 'rows head' + (v ? ' v4' : ''); $('#review-head').innerHTML = '<span></span>' + (v ? '<span>Infinitiv</span><span>Past</span><span>Participle</span><span>Deutsch</span>' : '<span>🇬🇧 Englisch</span><span>🇩🇪 Deutsch</span>') + '<span></span>';
   $('#review-rows').innerHTML = scanRows.map((r, i) => `<div class="rows${v ? ' v4' : ''}" data-i="${i}">
     <input type="checkbox" ${r.on ? 'checked' : ''}>${r.t.map((x, c) => `<input type="text" value="${esc(x)}" autocapitalize="off" autocomplete="off">`).join('')}<button aria-label="Zeile löschen" data-del>✖</button></div>`).join('');

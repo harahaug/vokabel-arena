@@ -69,47 +69,33 @@
 
   <!-- SCAN -->
   <section class="view" id="v-scan" hidden>
-    <h2>📸 Vokabeln scannen</h2>
-    <div class="panel">
-      <p class="hint">Schreib deutlich in <b>zwei Spalten</b> (links Englisch, rechts Deutsch – oder mit „–“ dazwischen), gutes Licht, Heft gerade halten.</p>
-      <div class="row">
-        <label class="btn primary file">📷 Foto aufnehmen<input type="file" id="cam" accept="image/*" capture="environment"></label>
-        <label class="btn file">🖼️ Aus Galerie<input type="file" id="gal" accept="image/*"></label>
-      </div>
-      <div class="row small">
-        <label>Seite enthält
-          <select id="scan-mode"><option value="words">Vokabeln (2 Spalten)</option><option value="verbs">Unregelmäßige Verben (4 Spalten)</option></select>
-        </label>
-      </div>
-      <div class="row small">
-        <label>Linke Spalte ist
-          <select id="scan-left"><option value="en">Englisch</option><option value="de">Deutsch</option></select>
-        </label>
-      </div>
-      <div class="row small">
-        <label>Lektion / Unit (optional)
-          <input id="scan-unit" list="units" placeholder="z. B. Unit 3" autocomplete="off" style="width:150px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25)">
-        </label>
-      </div>
+    <h2>📸 Vokabeln einscannen</h2>
+    <div class="panel center" id="scan-start">
+      <label class="snap file"><span>📷</span><b>Foto machen</b><input type="file" id="cam" accept="image/*" capture="environment"></label>
+      <label class="btn file wide">🖼️ Foto aus der Galerie<input type="file" id="gal" accept="image/*"></label>
+      <ol class="steps"><li>Heft <b>flach</b> hinlegen, gutes Licht</li><li>Foto machen – das ganze Blatt gerade von oben</li><li>Kurz prüfen und <b>speichern</b></li></ol>
+      <details class="more">
+        <summary>⚙️ Mehr Optionen</summary>
+        <div class="row small"><label>Seite enthält
+          <select id="scan-mode"><option value="words">Vokabeln (2 Spalten)</option><option value="verbs">Unregelmäßige Verben (4 Spalten)</option></select></label></div>
+        <div class="row small"><label>Linke Spalte ist
+          <select id="scan-left"><option value="en">Englisch</option><option value="de">Deutsch</option></select></label></div>
+        <div class="row small"><label>Lektion / Unit (optional)
+          <input id="scan-unit" list="units" placeholder="z. B. Unit 3" autocomplete="off" style="width:150px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25)"></label></div>
+        <div class="row"><button class="btn" id="manual">⌨️ Karte von Hand tippen</button></div>
+      </details>
       <img id="preview" alt="" hidden>
       <div id="ocr-status" class="status" hidden>
-        <div class="bar"><i id="ocr-bar"></i></div><span id="ocr-text">Bereite vor …</span>
+        <div class="bar"><i id="ocr-bar"></i></div><span id="ocr-text">Ich lese dein Heft …</span>
       </div>
     </div>
     <div class="panel" id="review" hidden>
-      <h3>✏️ Prüfen &amp; korrigieren</h3>
-      <p class="hint">Handschrift ist knifflig – bitte kurz drüberschauen. Falsche Zeilen einfach ändern oder abwählen.</p>
+      <h3>✏️ Stimmt alles?</h3>
+      <p class="hint">Ändere falsche Wörter einfach. Nicht passende Zeilen: Haken weg oder ✖.</p>
       <div id="review-head" class="rows head"></div>
       <div id="review-rows"></div>
-      <div class="row">
-        <button class="btn" id="rv-add">➕ Zeile</button>
-        <button class="btn" id="rv-swap">🔄 Spalten tauschen</button>
-        <button class="btn primary" id="rv-save">💾 Karten speichern</button>
-      </div>
-    </div>
-    <div class="panel">
-      <h3>⌨️ Oder direkt tippen</h3>
-      <button class="btn" id="manual">➕ Neue Karte von Hand anlegen</button>
+      <div class="row"><button class="btn" id="rv-add">➕ Zeile</button><button class="btn" id="rv-swap">🔄 Spalten tauschen</button></div>
+      <div class="stickybar"><button class="btn primary huge" id="rv-save">💾 Speichern</button></div>
     </div>
   </section>
 
