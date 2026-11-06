@@ -165,8 +165,8 @@
     <div class="gbar">
       <button class="chip btn-icon" id="quit" aria-label="Beenden">✖</button>
       <div class="progress"><i id="prog"></i></div>
-      <span class="chip">🔥 x<b id="combo">0</b></span>
-      <span class="chip">⭐ <b id="score">0</b></span>
+      <span class="chip" id="combo-chip">🔥 x<b id="combo">0</b></span>
+      <span class="chip" id="score-chip">⭐ <b id="score">0</b></span>
     </div>
     <div id="timer" class="timer" hidden><i></i></div>
     <div class="stage" id="stage">
@@ -210,6 +210,7 @@
       </label>
       <button class="btn" id="voice-test">▶️ Stimme testen</button>
       <p class="hint" id="voice-hint"></p>
+      <p class="hint" id="voice-info"></p>
       <p class="hint" id="store-info"></p>
     </div>
     <details class="more">

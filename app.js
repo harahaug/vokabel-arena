@@ -188,15 +188,29 @@ function pickVoice(lang) {
   const score = v => (goodName.test(v.name) ? 4 : 0) + (v.lang.replace('_', '-').toLowerCase() === (pre === 'en' ? 'en-gb' : 'de-de') ? 2 : 0) + (v.lang.toLowerCase().startsWith('en-us') ? 1 : 0) + (v.localService ? 2 : 0);
   return list.sort((a, b) => score(b) - score(a))[0];
 }
-function speak(text, lang = 'en', slow = false) {
+let curU = null, ttsUnlocked = false;
+function unlockSpeech() {   // iPhone/Android erlauben Sprache erst nach einer Berührung
+  if (ttsUnlocked || !window.speechSynthesis) return;
+  try { const u = new SpeechSynthesisUtterance('a'); u.volume = 0; speechSynthesis.speak(u); ttsUnlocked = true; } catch (e) { }
+}
+['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlockSpeech, { passive: true }));
+function speak(text, lang = 'en', slow = false, retried = false) {
   if (!window.speechSynthesis) { toast('Dein Browser kann nicht sprechen 😢'); return; }
   const clean = text.replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim(); if (!clean) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(clean);
-  u.lang = lang === 'en' ? 'en-GB' : 'de-DE';
-  const v = pickVoice(lang); if (v) { u.voice = v; u.lang = v.lang; }
-  u.rate = Math.max(.4, db.set.rate * (slow ? .6 : 1)); u.pitch = 1.02;
-  speechSynthesis.speak(u);
+  if (!voices.length) loadVoices();
+  try { speechSynthesis.cancel(); if (speechSynthesis.paused) speechSynthesis.resume(); } catch (e) { }
+  setTimeout(() => {
+    const u = curU = new SpeechSynthesisUtterance(clean);   // Referenz halten, sonst bricht Chrome manchmal ab
+    u.lang = lang === 'en' ? 'en-GB' : 'de-DE';
+    const v = retried ? null : pickVoice(lang);            // 2. Versuch: Standardstimme des Geräts
+    if (v) { u.voice = v; u.lang = v.lang.replace('_', '-'); }
+    u.rate = Math.max(.4, db.set.rate * (slow ? .6 : 1)); u.pitch = 1; u.volume = 1;
+    u.onerror = ev => {
+      if (!ev.error || ev.error === 'canceled' || ev.error === 'interrupted') return;
+      if (!retried) speak(text, lang, slow, true); else toast('🔇 Kein Ton – Lautstärke prüfen, dann 🔊 nochmal tippen');
+    };
+    try { speechSynthesis.speak(u); } catch (e) { if (!retried) speak(text, lang, slow, true); else toast('🔇 Ton geht gerade nicht'); }
+  }, 80);
 }
 
 
@@ -536,6 +550,7 @@ function renderSettings() {
   $('#rate').value = db.set.rate; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×';
   $('#calm').checked = !!db.set.calm; $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak;
   $('#store-info').textContent = '💾 Deine Karten werden automatisch in der Datenbank dieses Geräts gespeichert (' + STORE.mode + (STORE.persistent ? ', dauerhaft gesichert' : '') + ').';
+  $('#voice-info').textContent = window.speechSynthesis ? `Gefundene Stimmen: ${voices.length} (englisch: ${en.length})` : '';
   $('#voice-hint').textContent = !window.speechSynthesis ? 'Dieser Browser hat keine Sprachausgabe.' : en.length ? 'Tipp: Stimmen mit „Natural“, „Premium“ oder „Enhanced“ klingen am besten.' : 'Keine englische Stimme gefunden – installiere eine in den Geräte-Einstellungen (Sprachausgabe).';
 }
 $('#voice').onchange = e => { db.set.voice = e.target.value; save(); speak('Hello! Nice to meet you.'); };
@@ -613,7 +628,7 @@ function startGame(cards) {
 const stage = $('#stage'), tilt = $('#tilt'), flip = $('#flip'), fl = $('#float');
 async function nextQ() {
   if (G.i >= G.queue.length) return endGame();
-  const q = G.q = G.queue[G.i]; q.hints = 0; q.listen = G.level === 'schwer' && q.dir === 'en-de' && Math.random() < .35 && !!window.speechSynthesis;
+  const q = G.q = G.queue[G.i]; q.hints = 0; q.typeIt = G.level === 'leicht' && q.dir !== 'forms' && Math.random() < .3; q.listen = G.level === 'schwer' && q.dir === 'en-de' && Math.random() < .35 && !!window.speechSynthesis;
   G.busy = true; stopTimer(); $('#answer-area').innerHTML = ''; $('#timer').hidden = true;
   const r = rarity(q.c), from = q.dir === 'de-en' ? 'de' : 'en', to = q.dir === 'en-de' ? 'de' : 'en', forms = q.dir === 'forms';
   const text = { en: q.c.en, de: q.c.de };
@@ -642,7 +657,7 @@ function faceHTML(q, r, from, word, front) {
 stage.addEventListener('click', e => { const b = e.target.closest('[data-say]'); if (!b || !G || !G.q) return; e.stopPropagation(); const k = b.dataset.say; if (k.startsWith('forms')) { speak(`${G.q.c.en}, ${G.q.c.forms.join(', ')}`, 'en', k === 'forms-slow'); return; } speak(k === 'en-slow' ? G.q.c.en : k === 'en' ? G.q.c.en : G.q.c.de, k.startsWith('en') ? 'en' : 'de', k === 'en-slow'); });
 
 function buildAnswer(q, to, answer) {
-  const area = $('#answer-area');
+  const area = $('#answer-area'), lvl = q.typeIt ? 'mittel' : G.level;
   if (q.dir === 'forms') {
     const mid = G.level !== 'schwer';
     area.innerHTML = `<div class="typebox"><input id="i1" placeholder="Simple past" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><input id="i2" placeholder="Past participle" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div><div class="typebox"><button class="btn primary" id="go" style="flex:1">OK</button></div>${G.level === 'mittel' ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}`;
@@ -652,15 +667,15 @@ function buildAnswer(q, to, answer) {
     $('#go').onclick = submit; [i1, i2].forEach(i => i.onkeydown = e => { if (e.key === 'Enter') submit(); });
     if (!matchMedia('(pointer:coarse)').matches) i1.focus(); return;
   }
-  if (G.level === 'leicht') {
+  if (lvl === 'leicht') {
     const key = to === 'en' ? 'en' : 'de';
     const pool = [...new Set([...db.cards.map(c => c[key]), ...STARTER.map(s => s[to === 'en' ? 0 : 1])])].filter(x => strip(x) !== strip(answer));
-    const opts = shuffle([answer, ...shuffle(pool).slice(0, 3)]);
+    const opts = shuffle([answer, ...shuffle(pool).slice(0, 5)]);
     area.innerHTML = `<div class="choices">${opts.map(o => `<button class="choice">${esc(o)}</button>`).join('')}</div>`;
     $$('.choice', area).forEach(b => b.onclick = () => { if (G.busy) return; $$('.choice', area).forEach(x => x.disabled = true); const ok = b.textContent === answer; b.classList.add(ok ? 'ok' : 'no'); if (!ok) $$('.choice', area).find(x => x.textContent === answer).classList.add('ok'); resolve(ok ? 'ok' : 'bad'); });
   } else {
-    const mid = G.level === 'mittel';
-    area.innerHTML = `${mid ? '<div class="pattern" id="pat"></div>' : ''}<div class="typebox"><input id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${to === 'en' ? 'Auf Englisch …' : 'Auf Deutsch …'}"><button class="btn primary" id="go">OK</button></div>
+    const mid = lvl === 'mittel';
+    area.innerHTML = `${q.typeIt ? '<div class="typeit">✍️ Schreib es selbst auf!</div>' : ''}${mid ? '<div class="pattern" id="pat"></div>' : ''}<div class="typebox"><input id="inp" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${to === 'en' ? 'Auf Englisch …' : 'Auf Deutsch …'}"><button class="btn primary" id="go">OK</button></div>
       ${mid ? '<button class="btn" id="tip">💡 Tipp (−Punkte)</button>' : ''}`;
     const inp = $('#inp'); if (mid) { drawPattern(answer, 1); $('#tip').onclick = () => { q.hints++; drawPattern(answer, 1 + q.hints); sfx('tap'); inp.focus(); }; }
     const submit = () => { if (G.busy || !inp.value.trim()) return; resolve(judge(inp.value, answer, !mid), inp.value); };
@@ -751,3 +766,10 @@ function loop() {
 /* ---------- Start ---------- */
 if (profiles.length === 1) login(profiles[0].id); else { refresh(); show('profiles'); }
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
+
+/* Eingabefelder: Autokorrektur, Wortvorschläge und automatische Großschreibung aus (gilt auch für später erzeugte Felder) */
+(function () {
+  const A = { autocomplete: 'off', autocorrect: 'off', autocapitalize: 'none', spellcheck: 'false', inputmode: 'verbatim', 'data-gramm': 'false' };
+  const fix = () => document.querySelectorAll('input:not([type]),input[type=text],input[type=search]').forEach(i => { for (const k in A) if (i.getAttribute(k) !== A[k]) i.setAttribute(k, A[k]); });
+  fix(); new MutationObserver(fix).observe(document.body, { childList: true, subtree: true });
+})();
