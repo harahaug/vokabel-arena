@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#1b1147">
+<meta name="author" content="Harald Haug">
 <meta name="description" content="Vokabel-Arena – der Englisch-Vokabeltrainer mit Sammelkarten für Klasse 7. Von Harald Haug.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -32,6 +33,7 @@
       <div class="mini-deck" aria-hidden="true"><i></i><i></i><i></i></div>
       <h1>Sammle Karten.<br>Knack Vokabeln.</h1>
       <p>Englisch · Klasse 7</p>
+      <p class="by">✨ Erstellt von <b>Harald Haug</b></p>
     </div>
     <div class="menu">
       <button class="big primary" data-go="setup"><span>🎮</span><div><b>Spielen</b><small id="home-count">–</small></div></button>
@@ -115,6 +117,14 @@
         <button data-v="en-de"><b>🇬🇧 → 🇩🇪</b><small>Englisch sehen</small></button>
         <button data-v="de-en"><b>🇩🇪 → 🇬🇧</b><small>Deutsch sehen</small></button>
       </div>
+      <h3>📅 Wann hast du die Vokabeln eingescannt?</h3>
+      <select id="when-sel" style="width:100%;padding:10px">
+        <option value="all">Alle</option><option value="today">Heute</option><option value="week">Diese Woche</option><option value="month">Dieser Monat</option><option value="range">Eigener Zeitraum …</option>
+      </select>
+      <div class="row small" id="range-row" hidden>
+        <label>von <input type="date" id="d-from" class="date"></label><label>bis <input type="date" id="d-to" class="date"></label>
+      </div>
+      <p class="hint" id="pool-info"></p>
       <h3>Lektion</h3>
       <select id="unit-sel" style="width:100%;padding:10px"></select>
       <h3>Anzahl Karten</h3>
@@ -195,7 +205,7 @@
   </section>
 </main>
 
-<footer class="foot">Gemacht mit 💜 von <b>Harald Haug</b> · Vokabel-Arena v1</footer>
+<footer class="foot">Diese App wurde von <b>Harald Haug</b> erstellt 💜 · Vokabel-Arena v1</footer>
 
 <dialog id="dlg">
   <form method="dialog" id="dlg-form">

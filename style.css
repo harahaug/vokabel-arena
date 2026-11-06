@@ -205,3 +205,5 @@ dialog::backdrop{background:rgba(10,4,40,.7);backdrop-filter:blur(4px)}
 .answer-area{grid-template-columns:minmax(0,1fr)}.pattern{overflow-wrap:anywhere;font-size:18px}
 
 .rows.v4{grid-template-columns:30px repeat(4,minmax(0,1fr)) 30px;gap:5px}.rows.v4 input[type=text]{padding:7px 5px;font-size:13px}.typebox{margin-bottom:0}
+
+.by{margin-top:6px!important;color:var(--pri)!important;font-weight:700}.by b{color:#fff}.date{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:6px 8px;color:#fff;color-scheme:dark}

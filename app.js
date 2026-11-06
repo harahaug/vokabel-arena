@@ -105,7 +105,7 @@ function addCards(pairs, unit = '') {
   for (const [en, de] of pairs) {
     const e = norm0(en), d = norm0(de); if (!e || !d) continue;
     const k = e.toLowerCase() + '|' + d.toLowerCase(); if (seen.has(k)) continue;
-    seen.add(k); db.cards.push({ id: uid(), en: e, de: d, unit: norm0(unit), box: 0, ok: 0, bad: 0 }); n++;
+    seen.add(k); db.cards.push({ id: uid(), added: Date.now(), en: e, de: d, unit: norm0(unit), box: 0, ok: 0, bad: 0 }); n++;
   }
   save(); refresh(); fillUnits(); return n;
 }
@@ -115,10 +115,21 @@ function addVerbs(rows, unit = 'Irregular verbs') {
     const i = norm0(inf || '').replace(/^\(?to\)?\s+/i, ''), p = norm0(past || ''), q = norm0(pp || ''), d = norm0(de || '');
     if (!i || !p || !q || !d) continue;
     const en = 'to ' + i, k = en.toLowerCase() + '|' + d.toLowerCase(); if (seen.has(k)) continue;
-    seen.add(k); db.cards.push({ id: uid(), en, de: d, forms: [p, q], unit: norm0(unit), box: 0, ok: 0, bad: 0 }); n++;
+    seen.add(k); db.cards.push({ id: uid(), added: Date.now(), en, de: d, forms: [p, q], unit: norm0(unit), box: 0, ok: 0, bad: 0 }); n++;
   }
   save(); refresh(); fillUnits(); return n;
 }
+const addedOf = c => c.added || parseInt(c.id.slice(0, -4), 36) || 0;
+const dayStart = (d = new Date()) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+function whenRange(w) {
+  const now = new Date(), t0 = dayStart(now);
+  if (w === 'today') return [t0, Infinity];
+  if (w === 'week') return [t0 - ((now.getDay() + 6) % 7) * 864e5, Infinity];   // ab Montag
+  if (w === 'month') return [new Date(now.getFullYear(), now.getMonth(), 1).getTime(), Infinity];
+  if (w === 'range') { const f = db.set.from ? dayStart(new Date(db.set.from + 'T00:00')) : 0, t = db.set.to ? dayStart(new Date(db.set.to + 'T00:00')) + 864e5 : Infinity; return [f, t]; }
+  return [0, Infinity];
+}
+const pool = (w = db.set.when || 'all', unit = db.set.unit) => { const [a, b] = whenRange(w); return db.cards.filter(c => (!unit || c.unit === unit) && addedOf(c) >= a && addedOf(c) < b); };
 const units = () => [...new Set(db.cards.map(c => c.unit).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'de', { numeric: true }));
 function fillUnits() { $('#units').innerHTML = units().map(u => `<option value="${esc(u)}">`).join(''); }
 
@@ -370,13 +381,20 @@ function renderSetup() {
     $$('#' + id + ' button').forEach(b => b.classList.toggle('on', b.dataset.v === db.set[k]));
   const us = units(); if (db.set.unit && !us.includes(db.set.unit)) db.set.unit = '';
   $('#unit-sel').innerHTML = `<option value="">Alle Karten (${db.cards.length})</option>` + us.map(u => `<option ${u === db.set.unit ? 'selected' : ''} value="${esc(u)}">${esc(u)} (${db.cards.filter(c => c.unit === u).length})</option>`).join('');
+  const wsel = $('#when-sel'); wsel.value = db.set.when || 'all'; $('#range-row').hidden = wsel.value !== 'range';
+  [...wsel.options].forEach(o => { const n = o.value === 'range' ? null : pool(o.value).length; o.textContent = o.textContent.replace(/ \(\d+\)$/, '') + (n == null ? '' : ` (${n})`); });
+  $('#d-from').value = db.set.from || ''; $('#d-to').value = db.set.to || '';
+  $('#pool-info').textContent = `Damit spielst du ${pool().length} Karten.`;
   const w = $('#setup-warn');
   w.hidden = db.cards.length > 0; w.textContent = 'Du hast noch keine Karten – scanne dein Heft oder lade das Starter-Set unter „Meine Karten“.';
 }
 for (const [id, k] of [['seg-level', 'level'], ['seg-dir', 'dir'], ['seg-num', 'num']])
   $('#' + id).onclick = e => { const b = e.target.closest('button'); if (b) { db.set[k] = b.dataset.v; save(); sfx('tap'); renderSetup(); } };
-$('#unit-sel').onchange = e => { db.set.unit = e.target.value; save(); };
-$('#start').onclick = () => { if (!db.cards.length) { toast('Erst Karten sammeln 🃏'); return; } startGame(); };
+$('#unit-sel').onchange = e => { db.set.unit = e.target.value; save(); renderSetup(); };
+$('#when-sel').onchange = e => { db.set.when = e.target.value; save(); renderSetup(); };
+$('#d-from').onchange = e => { db.set.from = e.target.value; save(); renderSetup(); };
+$('#d-to').onchange = e => { db.set.to = e.target.value; save(); renderSetup(); };
+$('#start').onclick = () => { if (!db.cards.length) { toast('Erst Karten sammeln 🃏'); return; } if (!pool().length) { toast('Für diese Auswahl gibt es keine Karten 📅'); return; } startGame(); };
 
 /* ---------- Antworten prüfen ---------- */
 const clean = s => s.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss').replace(/\(.*?\)/g, ' ').replace(/[.,!?;:"'’`´]/g, '').replace(/\s+/g, ' ').trim();
@@ -407,7 +425,7 @@ function pickDir(c) {
 }
 function startGame(cards) {
   const level = db.set.level;
-  G = { level, queue: (cards || pickCards(db.cards.filter(c => !db.set.unit || c.unit === db.set.unit))).map(c => ({ c, dir: pickDir(c) })), i: 0, score: 0, combo: 0, best: 0, wrong: [], right: 0, busy: false };
+  G = { level, queue: (cards || pickCards(pool())).map(c => ({ c, dir: pickDir(c) })), i: 0, score: 0, combo: 0, best: 0, wrong: [], right: 0, busy: false };
   $('#score').textContent = 0; $('#combo').textContent = 0; $('#prog').style.width = '0';
   show('game'); nextQ();
 }
