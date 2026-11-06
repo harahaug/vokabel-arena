@@ -225,7 +225,37 @@ function blockySVG(seed) {
   <rect x="38" y="56" width="14" height="16" fill="#fff" stroke="${dk}" stroke-width="3"/><rect x="68" y="56" width="14" height="16" fill="#fff" stroke="${dk}" stroke-width="3"/><rect x="44" y="60" width="8" height="12" fill="${dk}"/><rect x="74" y="60" width="8" height="12" fill="${dk}"/>
   <rect x="48" y="80" width="24" height="6" fill="${dk}"/><rect x="30" y="76" width="8" height="6" fill="#ff8fab" opacity=".6"/><rect x="82" y="76" width="8" height="6" fill="#ff8fab" opacity=".6"/></svg>`;
 }
+function vinylSVG(seed) {
+  const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length], dk = '#14102e';
+  const skin = pick(['#ffe0c8', '#f2c9a5', '#c98f62', '#8d5a3a'], 0), cl = pick(['#ff4f7b', '#2d9cff', '#35e08a', '#ffb400', '#8a5cff', '#ff7a2d'], 3), cl2 = pick(['#14102e', '#ffffff', '#ffd23f'], 6);
+  const hat = (h >>> 9) % 4, glass = (h >>> 12) & 1;
+  const top = [`<path d="M16 46Q18 8 60 8Q102 8 104 46Q60 30 16 46Z" fill="${cl}" stroke="${dk}" stroke-width="3"/><circle cx="60" cy="8" r="7" fill="${cl2}" stroke="${dk}" stroke-width="3"/>`,
+    `<path d="M16 50Q20 10 60 10Q100 10 104 50Q92 28 60 30Q28 28 16 50Z" fill="${pick(['#14102e', '#ffcc33', '#ff5fa2', '#6a7bff'], 15)}" stroke="${dk}" stroke-width="3"/><path d="M52 10l8-8 8 8" fill="none" stroke="${dk}" stroke-width="3"/>`,
+    `<path d="M16 48Q20 10 60 10Q100 10 104 48L116 52L100 56Q60 36 20 56L4 52Z" fill="${cl}" stroke="${dk}" stroke-width="3" stroke-linejoin="round"/>`,
+    `<path d="M20 44Q24 12 60 12Q96 12 100 44Q80 24 60 28Q40 24 20 44Z" fill="${pick(['#14102e', '#8a5a2b', '#e8d27a', '#c0392b'], 15)}" stroke="${dk}" stroke-width="3"/><path d="M30 24L22 8L44 18ZM90 24L98 8L76 18Z" fill="${pick(['#14102e', '#8a5a2b', '#e8d27a', '#c0392b'], 15)}" stroke="${dk}" stroke-width="3" stroke-linejoin="round"/>`][hat];
+  return `<svg class="anime" viewBox="0 0 120 120" aria-hidden="true">
+  <rect x="38" y="92" width="44" height="26" rx="8" fill="${cl}" stroke="${dk}" stroke-width="3"/><rect x="38" y="104" width="44" height="6" fill="${cl2}" opacity=".7"/>
+  <rect x="12" y="14" width="96" height="82" rx="40" fill="${skin}" stroke="${dk}" stroke-width="3"/>
+  <ellipse cx="34" cy="38" rx="14" ry="8" fill="#fff" opacity=".35" transform="rotate(-25 34 38)"/>${top}
+  <circle cx="42" cy="62" r="8.5" fill="${dk}"/><circle cx="78" cy="62" r="8.5" fill="${dk}"/><circle cx="39" cy="59" r="3" fill="#fff"/><circle cx="75" cy="59" r="3" fill="#fff"/>
+  ${glass ? `<circle cx="42" cy="62" r="13" fill="#9fd0ff" fill-opacity=".25" stroke="${dk}" stroke-width="3"/><circle cx="78" cy="62" r="13" fill="#9fd0ff" fill-opacity=".25" stroke="${dk}" stroke-width="3"/><path d="M55 62h10" stroke="${dk}" stroke-width="3"/>` : ''}
+  <ellipse cx="28" cy="78" rx="6" ry="4" fill="#ff8fab" opacity=".55"/><ellipse cx="92" cy="78" rx="6" ry="4" fill="#ff8fab" opacity=".55"/><path d="M54 80Q60 85 66 80" fill="none" stroke="${dk}" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+}
+function robotSVG(seed) {
+  const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length], dk = '#14102e';
+  const metal = pick(['#c9d3e6', '#ffb36b', '#9be3ff', '#d9b8ff', '#9af0c0'], 0), led = pick(['#00e5ff', '#ff2e63', '#ffd23f', '#35e08a', '#d500f9'], 3), ant = (h >>> 9) % 3, smile = (h >>> 12) & 1;
+  const antenna = ant === 0 ? `<path d="M60 26V10" stroke="${dk}" stroke-width="4"/><circle cx="60" cy="9" r="6" fill="${led}" stroke="${dk}" stroke-width="3"/>` : ant === 1 ? `<path d="M44 28L36 10M76 28L84 10" stroke="${dk}" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="9" r="5" fill="${led}" stroke="${dk}" stroke-width="2.5"/><circle cx="84" cy="9" r="5" fill="${led}" stroke="${dk}" stroke-width="2.5"/>` : `<path d="M50 26Q60 4 72 26" fill="${led}" stroke="${dk}" stroke-width="3"/>`;
+  return `<svg class="anime" viewBox="0 0 120 120" aria-hidden="true">${antenna}
+  <rect x="34" y="98" width="52" height="22" rx="8" fill="${metal}" stroke="${dk}" stroke-width="3"/><circle cx="60" cy="109" r="5" fill="${led}" stroke="${dk}" stroke-width="2"/>
+  <rect x="6" y="52" width="14" height="28" rx="6" fill="${led}" stroke="${dk}" stroke-width="3"/><rect x="100" y="52" width="14" height="28" rx="6" fill="${led}" stroke="${dk}" stroke-width="3"/>
+  <rect x="16" y="24" width="88" height="74" rx="22" fill="${metal}" stroke="${dk}" stroke-width="3"/>
+  <path d="M26 34Q40 28 60 28" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+  <rect x="26" y="42" width="68" height="34" rx="14" fill="#1b1a3a" stroke="${dk}" stroke-width="3"/>
+  <ellipse cx="45" cy="59" rx="8" ry="10" fill="${led}"/><ellipse cx="75" cy="59" rx="8" ry="10" fill="${led}"/><circle cx="42" cy="55" r="3" fill="#fff"/><circle cx="72" cy="55" r="3" fill="#fff"/>
+  ${smile ? `<path d="M46 86Q60 96 74 86" fill="none" stroke="${dk}" stroke-width="4" stroke-linecap="round"/>` : `<rect x="46" y="84" width="28" height="7" rx="3.5" fill="${dk}"/><path d="M53 84v7M60 84v7M67 84v7" stroke="${metal}" stroke-width="2"/>`}</svg>`;
+}
 function animeSVG(seed, theme = themeOf()) {
+  if (theme === 'vinyl') return vinylSVG(seed); if (theme === 'robot') return robotSVG(seed);
   if (theme === 'vampir') return vampireSVG(seed); if (theme === 'blocky') return blockySVG(seed);
   const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length];
   const hair = pick(['#1a1a2e', '#ff3d8b', '#2d9cff', '#8a5cff', '#e8f0ff', '#12d6a0', '#ff7a2d', '#c0392b'], 0);
@@ -261,7 +291,7 @@ function login(id) { curId = id; ls.set(CK, id); loadDB(); fillUnits(); refresh(
 function renderProfiles() {
   $('#prof-grid').innerHTML = profiles.map((p, i) => `<div class="mc r${(hash(p.name) % 4) + 1}" data-id="${p.id}" style="animation-delay:${i * 60}ms">
     <div class="t"><span>SPIELER</span><button class="pdel" data-del="${p.id}" aria-label="Löschen">✖</button></div>
-    <div class="in">${animeSVG(p.name, p.theme || 'anime')}<b>${esc(p.name)}</b></div><div class="pw"><i style="width:100%"></i></div></div>`).join('');
+    <div class="in">${animeSVG(p.seed || p.name, p.theme || 'anime')}<b>${esc(p.name)}</b></div><div class="pw"><i style="width:100%"></i></div></div>`).join('');
 }
 $('#prof-grid').onclick = e => {
   const d = e.target.closest('[data-del]');
@@ -271,8 +301,17 @@ $('#prof-grid').onclick = e => {
 function addProfile() {
   const name = norm0($('#prof-name').value); if (!name) { toast('Bitte einen Namen eingeben'); return; }
   if (profiles.some(p => p.name.toLowerCase() === name.toLowerCase())) { toast('Den Namen gibt es schon'); return; }
-  const p = { id: 'p' + uid(), name, theme: $('#prof-theme').value }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
+  const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
+let pickTheme = 'anime', pickSeed = uid();
+const THEMES = [['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter']];
+function renderPicker() {
+  $('#theme-seg').innerHTML = THEMES.map(([k, i, n]) => `<button data-v="${k}" class="${k === pickTheme ? 'on' : ''}"><b>${i}</b><small style="display:block">${n}</small></button>`).join('');
+  $('#prof-prev').innerHTML = animeSVG(pickSeed, pickTheme);
+}
+$('#theme-seg').onclick = e => { const b = e.target.closest('button'); if (b) { pickTheme = b.dataset.v; sfx('tap'); renderPicker(); } };
+$('#prof-dice').onclick = () => { pickSeed = uid(); sfx('flip'); renderPicker(); };
+renderPicker();
 $('#prof-add').onclick = addProfile; $('#prof-name').onkeydown = e => { if (e.key === 'Enter') addProfile(); };
 $('#who').onclick = () => { sfx('tap'); show('profiles'); };
 
