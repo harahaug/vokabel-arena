@@ -9,6 +9,6 @@ Von **Harald Haug**. Läuft komplett im Browser, ohne KI/Server.
 - 💾 Daten liegen auf dem Gerät (localStorage); Backup als JSON; installierbar & offline (PWA)
 
 ## Veröffentlichen
-- **GitHub Pages:** Settings → Pages → Source: „GitHub Actions“. Link: https://vokabel-arena.netlify.app/
+- **Cloudflare Pages:** Build-Befehl `sh build.sh`, Ausgabeordner `dist`.
 - Lokal testen: `python3 -m http.server ` → http://localhost:8000
 Kamera/Sprache/Offline brauchen HTTPS (Pages/Netlify liefern das).

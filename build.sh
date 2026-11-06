@@ -2,7 +2,7 @@
 # Baut die veröffentlichte Version: JavaScript wird verkleinert und unlesbar gemacht.
 set -e
 mkdir -p dist
-cp index.html style.css manifest.json icon.svg impressum.html datenschutz.html dist/
+cp index.html style.css manifest.json icon.svg impressum.html datenschutz.html _headers dist/
 cp -r ocr dist/ocr
 npx --yes terser@5.31.0 app.js --compress passes=2 --mangle toplevel --format comments=false -o dist/app.js
 npx --yes terser@5.31.0 examples.js --compress --format comments=false -o dist/examples.js
