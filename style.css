@@ -228,3 +228,7 @@ html,body{overflow-x:hidden;max-width:100%}
 .opts{display:flex;flex-wrap:wrap;gap:6px}.opts button{min-width:38px;height:38px;padding:0 8px;border-radius:12px;border:2px solid transparent;background:rgba(0,0,0,.3);cursor:pointer;font-size:16px;color:#fff}
 .opts button.on{border-color:var(--pri);box-shadow:0 0 0 2px #0006,0 4px 12px rgba(0,0,0,.4);transform:translateY(-2px)}
 .seg.pick{grid-template-columns:repeat(3,1fr)}@media(min-width:520px){.seg.pick{grid-template-columns:repeat(7,1fr)}}
+
+.seg.pick{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.seg.pick button{flex:0 0 78px;scroll-snap-align:start}
+#ed-toggle{width:100%;margin:10px 0}

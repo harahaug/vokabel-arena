@@ -374,15 +374,16 @@ function addProfile() {
   if (editingP) { Object.assign(editingP, { name, theme: pickTheme, seed: pickSeed, opts: pickOpts }); const id = editingP.id; editingP = null; ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; $('#prof-add').textContent = 'Los'; $('#prof-title').textContent = '➕ Neuer Spieler'; confetti(40); login(id); return; }
   const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed, opts: pickOpts }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
-let pickTheme = 'custom', pickSeed = uid(), pickOpts = { ...AVDEF }, editingP = null;
+let edOpen = false, pickTheme = 'custom', pickSeed = uid(), pickOpts = { ...AVDEF }, editingP = null;
 const THEMES = [['custom', '✏️', 'Selbst bauen'], ['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎧', 'Funk'], ['phonk', '🔥', 'Phonk']];
 function renderPicker() {
   $('#theme-seg').innerHTML = THEMES.map(([k, i, n]) => `<button data-v="${k}" class="${k === pickTheme ? 'on' : ''}"><b>${i}</b><small style="display:block">${n}</small></button>`).join('');
   $('#prof-prev').innerHTML = pickTheme === 'custom' ? customSVG(pickOpts) : animeSVG(pickSeed, pickTheme);
-  const ed = $('#editor'); ed.hidden = pickTheme !== 'custom'; if (ed.hidden) return;
+  $('#ed-toggle').hidden = pickTheme !== 'custom'; const ed = $('#editor'); ed.hidden = pickTheme !== 'custom' || !edOpen; if (ed.hidden) return;
   const sw = (k, arr, label) => `<div class="orow"><span>${label}</span><div class="opts">${arr.map((v, i) => `<button type="button" data-k="${k}" data-i="${i}" class="${pickOpts[k] === i ? 'on' : ''}" ${v[0] === '#' ? `style="background:${v}"` : ''}>${v[0] === '#' ? '' : v}</button>`).join('')}</div></div>`;
   ed.innerHTML = sw('skin', AV.skin, 'Haut') + sw('hairS', AV.hairS, 'Frisur') + sw('hairC', AV.hairC, 'Haarfarbe') + sw('eyeC', AV.eyeC, 'Augen') + sw('mouth', AV.mouth, 'Mund') + sw('acc', AV.acc, 'Extra') + sw('outC', AV.outC, 'Kleidung');
 }
+$('#ed-toggle').onclick = () => { edOpen = !edOpen; $('#ed-toggle').textContent = edOpen ? '▲ Weniger Einstellungen' : '✏️ Figur genauer einstellen'; renderPicker(); };
 $('#editor').onclick = e => { const b = e.target.closest('[data-k]'); if (b) { pickOpts[b.dataset.k] = +b.dataset.i; sfx('tap'); renderPicker(); } };
 $('#theme-seg').onclick = e => { const b = e.target.closest('button'); if (b) { pickTheme = b.dataset.v; sfx('tap'); renderPicker(); } };
 $('#prof-dice').onclick = () => { pickSeed = uid(); pickOpts = avRandom(); sfx('flip'); renderPicker(); };
