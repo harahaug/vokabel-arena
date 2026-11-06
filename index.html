@@ -203,30 +203,31 @@
   <section class="view" id="v-settings" hidden>
     <h2>⚙️ Einstellungen</h2>
     <div class="panel">
-      <h3>🔊 Aussprache</h3>
-      <label class="field">Englische Stimme
+      <label class="check big-check"><input type="checkbox" id="calm"> 🧘 Ruhig-Modus <small>(weniger Bewegung, kein Zeitdruck)</small></label>
+      <label class="check big-check"><input type="checkbox" id="sound"> 🔔 Spiel-Sounds</label>
+      <label class="field">🔊 Englische Stimme
         <select id="voice"></select>
       </label>
-      <label class="field">Sprechtempo <output id="rate-out"></output>
-        <input type="range" id="rate" min="0.5" max="1.2" step="0.05">
-      </label>
-      <div class="row">
-        <button class="btn" id="voice-test">▶️ Testen</button>
-        <label class="check"><input type="checkbox" id="calm"> 🧘 Ruhig-Modus (weniger Bewegung, kein Zeitdruck)</label>
-        <label class="check"><input type="checkbox" id="sound"> Spiel-Sounds</label>
-        <label class="check"><input type="checkbox" id="autospeak"> Automatisch vorlesen</label>
-      </div>
+      <button class="btn" id="voice-test">▶️ Stimme testen</button>
       <p class="hint" id="voice-hint"></p>
+      <p class="hint" id="store-info"></p>
     </div>
-    <div class="panel">
-      <h3>💾 Meine Daten</h3>
-      <p class="hint">Alles wird nur auf <b>diesem Gerät</b> gespeichert. Mit dem Backup kannst du Karten auf ein anderes Gerät mitnehmen.</p>
-      <div class="row">
-        <button class="btn" id="export">⬇️ Backup speichern</button>
-        <label class="btn file">⬆️ Backup laden<input type="file" id="import" accept="application/json"></label>
-        <button class="btn danger" id="wipe">🗑️ Alles löschen</button>
+    <details class="more">
+      <summary>Mehr</summary>
+      <div class="panel">
+        <label class="field">Sprechtempo <output id="rate-out"></output>
+          <input type="range" id="rate" min="0.5" max="1.2" step="0.05">
+        </label>
+        <label class="check"><input type="checkbox" id="autospeak"> Automatisch vorlesen</label>
+        <h3>📦 Auf ein anderes Gerät mitnehmen</h3>
+        <p class="hint">Gespeichert wird immer automatisch. Nur wenn du auf ein neues Handy wechselst, speicherst du hier eine Datei und lädst sie dort wieder.</p>
+        <div class="row">
+          <button class="btn" id="export">⬇️ Backup speichern</button>
+          <label class="btn file">⬆️ Backup laden<input type="file" id="import" accept="application/json"></label>
+          <button class="btn danger" id="wipe">🗑️ Alles löschen</button>
+        </div>
       </div>
-    </div>
+    </details>
   </section>
 </main>
 
@@ -250,6 +251,6 @@
 </dialog>
 
 <datalist id="units"></datalist>
-<script src="app.js"></script>
+<script src="store.js"></script>
 </body>
 </html>

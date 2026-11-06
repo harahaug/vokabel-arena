@@ -93,7 +93,7 @@ hurt|hurt|hurt|wehtun, schmerzen; verletzen`.split('\n').map(l => l.split('|'));
 
 /* ---------- Speicher ---------- */
 const PK = 'vokabelarena.profiles', CK = 'vokabelarena.current', OLD = 'vokabelarena.v1';
-const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } }, del: k => { try { localStorage.removeItem(k); } catch (e) { } } };
+const ls = { get: k => STORE.get(k), set: (k, v) => STORE.set(k, v), del: k => STORE.del(k) };
 const defaults = () => ({ cards: [], set: { dir: 'mix', level: 'mittel', num: '5', calm: true, sound: true, autospeak: true, voice: '', rate: 0.85 }, xp: 0, streak: 0, lastDay: '' });
 let profiles = []; try { profiles = JSON.parse(ls.get(PK)) || []; } catch (e) { }
 if (!profiles.length && ls.get(OLD)) { profiles = [{ id: 'p1', name: 'Ich' }]; ls.set('vokabelarena.v1.p1', ls.get(OLD)); ls.set(PK, JSON.stringify(profiles)); }   // alte Daten übernehmen
@@ -532,6 +532,7 @@ function renderSettings() {
   $('#voice').innerHTML = `<option value="">Automatisch (beste Stimme)</option>` + en.map(v => `<option ${v.name === db.set.voice ? 'selected' : ''} value="${esc(v.name)}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
   $('#rate').value = db.set.rate; $('#rate-out').textContent = db.set.rate.toFixed(2) + '×';
   $('#calm').checked = !!db.set.calm; $('#sound').checked = db.set.sound; $('#autospeak').checked = db.set.autospeak;
+  $('#store-info').textContent = '💾 Deine Karten werden automatisch in der Datenbank dieses Geräts gespeichert (' + STORE.mode + (STORE.persistent ? ', dauerhaft gesichert' : '') + ').';
   $('#voice-hint').textContent = !window.speechSynthesis ? 'Dieser Browser hat keine Sprachausgabe.' : en.length ? 'Tipp: Stimmen mit „Natural“, „Premium“ oder „Enhanced“ klingen am besten.' : 'Keine englische Stimme gefunden – installiere eine in den Geräte-Einstellungen (Sprachausgabe).';
 }
 $('#voice').onchange = e => { db.set.voice = e.target.value; save(); speak('Hello! Nice to meet you.'); };

@@ -255,3 +255,5 @@ body.calm #combo,body.calm #timer{display:none}
 body.calm .gbar .chip:nth-of-type(2){display:none}
 @keyframes calmin{from{opacity:0;transform:translateY(10px)}}
 @keyframes calmout{to{opacity:0;transform:translateY(-10px)}}
+
+.big-check{font-size:17px;padding:10px 0}.big-check input{width:22px;height:22px;accent-color:var(--pri)}.big-check small{color:var(--mut)}
