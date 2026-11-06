@@ -270,7 +270,58 @@ function funkSVG(seed) {
   <path d="M38 62l8-4M68 62l8-4" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
   <path d="M48 88Q60 98 72 88Q60 92 48 88Z" fill="#fff" stroke="${dk}" stroke-width="3" stroke-linejoin="round"/></svg>`;
 }
+/* ---------- Eigener Avatar (selbst zusammenbauen) ---------- */
+const AV = {
+  skin: ['#ffe0c8', '#f6cfb5', '#e8b98a', '#c98f62', '#8d5a3a', '#5c3a24'],
+  hairC: ['#14102e', '#5a3a1a', '#c68642', '#ffd23f', '#ff3d8b', '#8a5cff', '#2d9cff', '#12d6a0', '#ff7a2d', '#f5f5ff'],
+  eyeC: ['#2d6bff', '#00b894', '#a55eea', '#ff2e63', '#f0a500', '#5a3a1a'],
+  outC: ['#ff2e90', '#6a2cff', '#2d9cff', '#12b886', '#ff8a3d', '#ffd23f', '#14102e', '#e8e8ff'],
+  hairS: ['Kurz', 'Lang', 'Bob', 'Zöpfe', 'Afro', 'Spitz', 'Glatze'],
+  acc: ['–', '🎧', '👓', '🐱', '👑', '🕶️', '🎀', '🧢'],
+  mouth: ['😊', '😮', '😏', '🧛']
+};
+const AVDEF = { skin: 0, hairS: 0, hairC: 0, eyeC: 0, outC: 0, acc: 0, mouth: 0 };
+const avRandom = () => ({ skin: rnd(6), hairS: rnd(7), hairC: rnd(10), eyeC: rnd(6), outC: rnd(8), acc: rnd(8), mouth: rnd(4) });
+function customSVG(o) {
+  o = { ...AVDEF, ...o }; const dk = '#14102e', sk = AV.skin[o.skin], hc = AV.hairC[o.hairC], ec = AV.eyeC[o.eyeC], oc = AV.outC[o.outC], hs = o.hairS, ac = o.acc;
+  const st = `fill="${hc}" stroke="${dk}" stroke-width="2.5" stroke-linejoin="round"`;
+  const back = [``, `<path d="M22 56Q8 104 30 118L50 82ZM98 56Q112 104 90 118L70 82Z" ${st}/>`, `<path d="M20 56Q14 100 38 98L44 70ZM100 56Q106 100 82 98L76 70Z" ${st}/>`,
+    `<path d="M26 60Q4 70 10 112Q26 104 34 76ZM94 60Q116 70 110 112Q94 104 86 76Z" ${st}/>`, `<circle cx="60" cy="46" r="46" ${st}/>`, ``, ``][hs];
+  const fringeA = `<path d="M24 66Q16 22 60 16Q104 22 96 66Q94 44 84 38Q72 52 60 36Q52 50 38 40Q28 46 24 66Z" ${st}/>`;
+  const front = hs === 6 ? `<path d="M40 30Q58 20 78 28" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".6"/>` : hs === 5 ? `<path d="M20 70Q10 40 22 20L38 34L40 8L56 28L66 4L76 28L94 8L92 34L106 22Q112 44 100 70Q96 44 84 40Q60 52 36 40Q24 46 20 70Z" ${st}/>` : hs === 0 ? `<path d="M26 62Q22 20 60 18Q98 20 94 62Q88 38 74 34Q60 44 46 34Q32 38 26 62Z" ${st}/>` : fringeA;
+  const eye = x => `<ellipse cx="${x}" cy="68" rx="9" ry="11.5" fill="#fff" stroke="${dk}" stroke-width="2.5"/><ellipse cx="${x}" cy="70" rx="6.5" ry="9" fill="${ec}"/><ellipse cx="${x}" cy="71" rx="3" ry="5.5" fill="${dk}"/><circle cx="${x - 2.5}" cy="66" r="2.6" fill="#fff"/><path d="M${x - 11} 58Q${x} 52 ${x + 11} 58" fill="none" stroke="${dk}" stroke-width="3.5" stroke-linecap="round"/>`;
+  const mouth = [`<path d="M52 89Q60 96 68 89" fill="none" stroke="${dk}" stroke-width="3" stroke-linecap="round"/>`, `<ellipse cx="60" cy="91" rx="5" ry="6" fill="${dk}"/><ellipse cx="60" cy="93" rx="3" ry="3" fill="#ff6b81"/>`,
+    `<path d="M52 90Q61 92 69 86" fill="none" stroke="${dk}" stroke-width="3" stroke-linecap="round"/>`, `<path d="M50 88Q60 94 70 88" fill="#fff" stroke="${dk}" stroke-width="2.5"/><path d="M53 89l2 6 3-5M67 89l-2 6-3-5" fill="#fff" stroke="${dk}" stroke-width="1.5" stroke-linejoin="round"/>`][o.mouth];
+  const acce = [``, `<path d="M26 60Q60 22 94 60" fill="none" stroke="${dk}" stroke-width="7"/><rect x="14" y="52" width="14" height="28" rx="7" fill="${oc}" stroke="${dk}" stroke-width="2.5"/><rect x="92" y="52" width="14" height="28" rx="7" fill="${oc}" stroke="${dk}" stroke-width="2.5"/>`,
+    `<circle cx="46" cy="68" r="13" fill="#9fd0ff" fill-opacity=".25" stroke="${dk}" stroke-width="3"/><circle cx="74" cy="68" r="13" fill="#9fd0ff" fill-opacity=".25" stroke="${dk}" stroke-width="3"/><path d="M59 68h2" stroke="${dk}" stroke-width="3"/>`,
+    `<path d="M28 32L22 6L46 20ZM92 32L98 6L74 20Z" ${st}/><path d="M30 26L28 14L40 20ZM90 26L92 14L80 20Z" fill="#ff9ac8"/>`, `<path d="M36 26L34 8L48 18L60 4L72 18L86 8L84 26Z" fill="#ffd23f" stroke="${dk}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="60" cy="18" r="3" fill="#ff2e63"/>`,
+    `<rect x="31" y="58" width="26" height="18" rx="8" fill="#14102e"/><rect x="63" y="58" width="26" height="18" rx="8" fill="#14102e"/><path d="M57 64h6" stroke="#14102e" stroke-width="3"/><path d="M36 62l8-3M68 62l8-3" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".6"/>`,
+    `<path d="M84 22l14-8v18zM84 22L70 14v18z" fill="#ff2e90" stroke="${dk}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="84" cy="22" r="4" fill="#ffd23f" stroke="${dk}" stroke-width="2"/>`,
+    `<path d="M24 46Q26 14 60 14Q94 14 96 46Z" fill="${oc}" stroke="${dk}" stroke-width="2.5"/><path d="M92 44Q112 44 112 50Q100 52 90 50Z" fill="${oc}" stroke="${dk}" stroke-width="2.5"/>`][ac];
+  return `<svg class="anime" viewBox="0 0 120 120" aria-hidden="true">${back}
+  <path d="M28 106Q60 126 92 106L98 120H22Z" fill="${oc}" stroke="${dk}" stroke-width="2.5"/><path d="M48 106L60 119L72 106" fill="#fff" stroke="${dk}" stroke-width="2"/>
+  <ellipse cx="60" cy="68" rx="32" ry="36" fill="${sk}" stroke="${dk}" stroke-width="2.5"/>${front}${ac === 3 ? '' : ''}
+  ${ac === 5 ? '' : eye(46) + eye(74)}
+  <ellipse cx="34" cy="83" rx="5" ry="3" fill="#ff8fab" opacity=".5"/><ellipse cx="86" cy="83" rx="5" ry="3" fill="#ff8fab" opacity=".5"/>${mouth}${acce}</svg>`;
+}
+function phonkSVG(seed) {
+  const h = hash(seed), pick = (a, n) => a[(h >>> n) % a.length], dk = '#0b0818';
+  const skin = pick(['#ffe0c8', '#f2c9a5', '#c98f62', '#8d5a3a', '#5c3a24'], 0), neon = pick(['#ff1744', '#b400ff', '#00e5ff', '#ff6d00', '#39ff14'], 3), hood = pick(['#1d1a33', '#2a1233', '#10202e', '#2b1a1a'], 6), style = (h >>> 9) % 3, grin = (h >>> 12) & 1;
+  const id = 'g' + (h % 9973);
+  return `<svg class="anime" viewBox="0 0 120 120" aria-hidden="true"><defs><filter id="${id}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <path d="M10 120Q14 90 40 84L80 84Q106 90 110 120Z" fill="${hood}" stroke="${dk}" stroke-width="3"/><path d="M52 90L60 120L68 90" fill="none" stroke="${neon}" stroke-width="3" stroke-linecap="round" filter="url(#${id})"/>
+  <path d="M44 100Q60 112 76 100" fill="none" stroke="#ffd23f" stroke-width="3.5"/><circle cx="60" cy="110" r="4.5" fill="#ffd23f" stroke="${dk}" stroke-width="1.5"/>
+  <path d="M14 70Q8 14 60 8Q112 14 106 70Q100 98 60 100Q20 98 14 70Z" fill="${hood}" stroke="${dk}" stroke-width="3"/>
+  <ellipse cx="60" cy="68" rx="30" ry="32" fill="${skin}" stroke="${dk}" stroke-width="3"/>
+  <path d="M30 56Q36 34 60 34Q84 34 90 56Q74 44 60 46Q46 44 30 56Z" fill="${hood}" stroke="${dk}" stroke-width="3"/>
+  ${style === 0 ? `<path d="M28 44Q60 18 92 44" fill="none" stroke="${dk}" stroke-width="7"/><rect x="14" y="50" width="14" height="28" rx="7" fill="${dk}" stroke="${neon}" stroke-width="2.5" filter="url(#${id})"/><rect x="92" y="50" width="14" height="28" rx="7" fill="${dk}" stroke="${neon}" stroke-width="2.5" filter="url(#${id})"/>` : style === 1 ? `<path d="M24 46Q26 14 60 14Q94 14 96 46Z" fill="${dk}" stroke="${neon}" stroke-width="2.5" filter="url(#${id})"/><path d="M94 44Q114 44 114 50Q102 52 92 50Z" fill="${dk}" stroke="${neon}" stroke-width="2.5"/>` : `<path d="M36 100Q60 118 84 100L80 86Q60 96 40 86Z" fill="${dk}" stroke="${neon}" stroke-width="2" opacity=".9"/><circle cx="60" cy="96" r="3" fill="${neon}"/>`}
+  <rect x="31" y="58" width="27" height="17" rx="8" fill="${dk}" stroke="${neon}" stroke-width="2.5" filter="url(#${id})"/><rect x="62" y="58" width="27" height="17" rx="8" fill="${dk}" stroke="${neon}" stroke-width="2.5" filter="url(#${id})"/><path d="M58 64h4" stroke="${neon}" stroke-width="3"/>
+  <path d="M36 63l9-3M67 63l9-3" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+  ${style === 2 ? '' : grin ? `<path d="M48 88Q60 98 72 88" fill="#fff" stroke="${dk}" stroke-width="2.5" stroke-linejoin="round"/>` : `<path d="M52 90Q61 92 69 86" fill="none" stroke="${dk}" stroke-width="3" stroke-linecap="round"/>`}</svg>`;
+}
 function animeSVG(seed, theme = themeOf()) {
+  if (theme === 'phonk') return phonkSVG(seed);
+  if (theme === 'custom') return customSVG((profiles.find(p => p.id === curId) || {}).opts);
   if (theme === 'funk') return funkSVG(seed);
   if (theme === 'vinyl') return vinylSVG(seed); if (theme === 'robot') return robotSVG(seed);
   if (theme === 'vampir') return vampireSVG(seed); if (theme === 'blocky') return blockySVG(seed);
@@ -307,27 +358,34 @@ function animeSVG(seed, theme = themeOf()) {
 function login(id) { curId = id; ls.set(CK, id); loadDB(); fillUnits(); refresh(); show('home'); }
 function renderProfiles() {
   $('#prof-grid').innerHTML = profiles.map((p, i) => `<div class="mc r${(hash(p.name) % 4) + 1}" data-id="${p.id}" style="animation-delay:${i * 60}ms">
-    <div class="t"><span>SPIELER</span><button class="pdel" data-del="${p.id}" aria-label="Löschen">✖</button></div>
-    <div class="in">${animeSVG(p.seed || p.name, p.theme || 'anime')}<b>${esc(p.name)}</b></div><div class="pw"><i style="width:100%"></i></div></div>`).join('');
+    <div class="t"><span>SPIELER</span><span><button class="pdel" data-edit="${p.id}" aria-label="Avatar ändern">✏️</button><button class="pdel" data-del="${p.id}" aria-label="Löschen">✖</button></span></div>
+    <div class="in">${p.theme === 'custom' ? customSVG(p.opts) : animeSVG(p.seed || p.name, p.theme || 'anime')}<b>${esc(p.name)}</b></div><div class="pw"><i style="width:100%"></i></div></div>`).join('');
 }
 $('#prof-grid').onclick = e => {
+  const ed = e.target.closest('[data-edit]');
+  if (ed) { e.stopPropagation(); const p = profiles.find(x => x.id === ed.dataset.edit); editingP = p; pickTheme = p.theme || 'anime'; pickSeed = p.seed || uid(); pickOpts = { ...AVDEF, ...(p.opts || {}) }; $('#prof-name').value = p.name; $('#prof-add').textContent = 'Speichern'; $('#prof-title').textContent = '✏️ Avatar ändern'; renderPicker(); $('#prof-title').scrollIntoView({ behavior: 'smooth' }); return; }
   const d = e.target.closest('[data-del]');
   if (d) { e.stopPropagation(); const p = profiles.find(x => x.id === d.dataset.del); if (p && confirm(`Spieler „${p.name}“ mit allen Karten löschen?`)) { profiles = profiles.filter(x => x !== p); ls.set(PK, JSON.stringify(profiles)); ls.del(OLD + '.' + p.id); if (curId === p.id) { curId = ''; db = defaults(); } renderProfiles(); refresh(); } return; }
   const m = e.target.closest('.mc'); if (m) { sfx('win'); login(m.dataset.id); }
 };
 function addProfile() {
   const name = norm0($('#prof-name').value); if (!name) { toast('Bitte einen Namen eingeben'); return; }
-  if (profiles.some(p => p.name.toLowerCase() === name.toLowerCase())) { toast('Den Namen gibt es schon'); return; }
-  const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
+  if (profiles.some(p => p !== editingP && p.name.toLowerCase() === name.toLowerCase())) { toast('Den Namen gibt es schon'); return; }
+  if (editingP) { Object.assign(editingP, { name, theme: pickTheme, seed: pickSeed, opts: pickOpts }); const id = editingP.id; editingP = null; ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; $('#prof-add').textContent = 'Los'; $('#prof-title').textContent = '➕ Neuer Spieler'; confetti(40); login(id); return; }
+  const p = { id: 'p' + uid(), name, theme: pickTheme, seed: pickSeed, opts: pickOpts }; profiles.push(p); ls.set(PK, JSON.stringify(profiles)); $('#prof-name').value = ''; confetti(60); login(p.id);
 }
-let pickTheme = 'anime', pickSeed = uid();
-const THEMES = [['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎧', 'Funk']];
+let pickTheme = 'custom', pickSeed = uid(), pickOpts = { ...AVDEF }, editingP = null;
+const THEMES = [['custom', '✏️', 'Selbst bauen'], ['anime', '🎀', 'Anime'], ['vampir', '🧛', 'Vampir'], ['blocky', '🧱', 'Block-Welt'], ['vinyl', '🪆', 'Pop-Figur'], ['robot', '🤖', 'Roboter'], ['funk', '🎧', 'Funk'], ['phonk', '🔥', 'Phonk']];
 function renderPicker() {
   $('#theme-seg').innerHTML = THEMES.map(([k, i, n]) => `<button data-v="${k}" class="${k === pickTheme ? 'on' : ''}"><b>${i}</b><small style="display:block">${n}</small></button>`).join('');
-  $('#prof-prev').innerHTML = animeSVG(pickSeed, pickTheme);
+  $('#prof-prev').innerHTML = pickTheme === 'custom' ? customSVG(pickOpts) : animeSVG(pickSeed, pickTheme);
+  const ed = $('#editor'); ed.hidden = pickTheme !== 'custom'; if (ed.hidden) return;
+  const sw = (k, arr, label) => `<div class="orow"><span>${label}</span><div class="opts">${arr.map((v, i) => `<button type="button" data-k="${k}" data-i="${i}" class="${pickOpts[k] === i ? 'on' : ''}" ${v[0] === '#' ? `style="background:${v}"` : ''}>${v[0] === '#' ? '' : v}</button>`).join('')}</div></div>`;
+  ed.innerHTML = sw('skin', AV.skin, 'Haut') + sw('hairS', AV.hairS, 'Frisur') + sw('hairC', AV.hairC, 'Haarfarbe') + sw('eyeC', AV.eyeC, 'Augen') + sw('mouth', AV.mouth, 'Mund') + sw('acc', AV.acc, 'Extra') + sw('outC', AV.outC, 'Kleidung');
 }
+$('#editor').onclick = e => { const b = e.target.closest('[data-k]'); if (b) { pickOpts[b.dataset.k] = +b.dataset.i; sfx('tap'); renderPicker(); } };
 $('#theme-seg').onclick = e => { const b = e.target.closest('button'); if (b) { pickTheme = b.dataset.v; sfx('tap'); renderPicker(); } };
-$('#prof-dice').onclick = () => { pickSeed = uid(); sfx('flip'); renderPicker(); };
+$('#prof-dice').onclick = () => { pickSeed = uid(); pickOpts = avRandom(); sfx('flip'); renderPicker(); };
 renderPicker();
 $('#prof-add').onclick = addProfile; $('#prof-name').onkeydown = e => { if (e.key === 'Enter') addProfile(); };
 $('#who').onclick = () => { sfx('tap'); show('profiles'); };
