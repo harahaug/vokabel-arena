@@ -269,7 +269,7 @@ body.calm #combo-chip,body.calm #score-chip{display:none}
 .toast{border-radius:16px;max-width:88vw;text-align:center;padding:10px 16px;line-height:1.3}
 .spk{white-space:nowrap}
 
-.back{font-weight:800;color:var(--pri)}.me{cursor:pointer;margin-top:10px;font-weight:700}
+.navback{font-weight:800;color:var(--pri)}.me{cursor:pointer;margin-top:10px;font-weight:700}
 .hero{padding:0 0 10px}.hero h1{font-size:28px}.mini-deck{height:78px}.mini-deck i{width:52px;height:74px;margin-left:-26px}
 body.calm .mini-deck i{transform:rotate(var(--a)) translateY(0)}
 .mini-deck i:nth-child(1){margin-left:-52px}.mini-deck i:nth-child(3){margin-left:0}
@@ -332,3 +332,17 @@ body.calm .finger{animation:none}
 
 /* Platz unten, damit Overlays (z. B. der Netlify-Knopf) die Links nicht verdecken */
 .foot{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+
+/* ===== Elegante Auflösung statt Drehen: Karte blendet weich zur Antwort über (nichts steht auf dem Kopf oder spiegelverkehrt) ===== */
+.face{backface-visibility:visible;-webkit-backface-visibility:visible}
+.face.back{transform:none;opacity:0;pointer-events:none}
+.flip.on,body.calm .flip.on{transform:none!important;animation:none!important;transition:none}
+.flip.on .face.front{opacity:0;transform:scale(.94) translateY(-8px);filter:blur(4px);pointer-events:none;transition:opacity .4s ease,transform .5s cubic-bezier(.3,.8,.3,1),filter .4s}
+.flip.on .face.back{opacity:1;pointer-events:auto;animation:reveal .75s cubic-bezier(.2,.9,.3,1) both}
+@keyframes reveal{0%{opacity:0;transform:scale(.9) translateY(14px)}55%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:none}}
+.art::after{content:"";position:absolute;inset:-30%;pointer-events:none;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%);transform:translateX(-130%)}
+.flip.on .face.back .art::after{animation:sheen .9s .2s ease-out both}
+@keyframes sheen{to{transform:translateX(130%)}}
+body.calm .flip.on .face.back{animation:calmReveal .35s ease-out both}
+body.calm .flip.on .face.back .art::after{animation:none}
+@keyframes calmReveal{from{opacity:0}to{opacity:1}}

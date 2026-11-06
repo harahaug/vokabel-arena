@@ -143,7 +143,7 @@ function fillUnits() { $('#units').innerHTML = units().map(u => `<option value="
 const views = $$('.view');
 let curView = 'home';
 function show(name) {
-  curView = name; $('#back').hidden = name === 'home' || name === 'game' || (name === 'profiles' && !curId);
+  curView = name; $('#nav-back').hidden = name === 'home' || name === 'game' || (name === 'profiles' && !curId);
   views.forEach(v => v.hidden = v.id !== 'v-' + name);
   window.scrollTo(0, 0);
   if (name === 'library') renderLib();
@@ -467,7 +467,7 @@ $('#th-next').onclick = () => { sfx('tap'); scrollThemes(1); };
 $('#prof-dice').onclick = () => { pickSeed = uid(); pickOpts = avRandom(); sfx('flip'); renderPicker(); };
 renderPicker();
 $('#prof-add').onclick = addProfile; $('#prof-name').onkeydown = e => { if (e.key === 'Enter') addProfile(); };
-$('#back').onclick = () => { sfx('tap'); if (curView === 'profiles') stopEdit(); show(curId ? 'home' : 'profiles'); };
+$('#nav-back').onclick = () => { sfx('tap'); if (curView === 'profiles') stopEdit(); show(curId ? 'home' : 'profiles'); };
 $('#edit-me').onclick = () => { sfx('tap'); show('profiles'); startEdit(profiles.find(p => p.id === curId)); $('#prof-title').scrollIntoView({ behavior: 'smooth' }); };
 $('#who').onclick = () => { sfx('tap'); show('profiles'); };
 
